@@ -1,0 +1,1009 @@
+:root {
+  --primary-cyan: #00f3ff;
+  --neon-magenta: #ff0077;
+  --neon-yellow: #ffe600;
+  --neon-red: #ff3344;
+  --neon-orange: #ff7700;
+  --neon-green: #00ff88;
+  --hud-bg: rgba(8, 14, 28, 0.75);
+  --hud-border: rgba(0, 243, 255, 0.4);
+  --glass-glow: 0 0 20px rgba(0, 243, 255, 0.25);
+  --font-cyber: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sub: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #030712;
+  font-family: var(--font-sub);
+  color: #f1f5f9;
+}
+
+#game-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* ================= HUD Overlay ================= */
+#hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  font-family: var(--font-cyber);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 顶部状态条 */
+.hud-top-bar {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+}
+
+.hud-panel {
+  background: var(--hud-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--hud-border);
+  padding: 8px 24px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: var(--glass-glow);
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+.hud-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #94a3b8;
+  font-family: var(--font-sub);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.hud-value {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.neon-cyan { color: var(--primary-cyan); text-shadow: 0 0 10px rgba(0, 243, 255, 0.7); }
+.neon-yellow { color: var(--neon-yellow); text-shadow: 0 0 10px rgba(255, 230, 0, 0.7); }
+.neon-red { color: var(--neon-red); text-shadow: 0 0 10px rgba(255, 51, 68, 0.7); }
+.neon-orange { color: var(--neon-orange); text-shadow: 0 0 10px rgba(255, 119, 0, 0.7); }
+.neon-magenta { color: var(--neon-magenta); text-shadow: 0 0 10px rgba(255, 0, 119, 0.7); }
+.neon-green { color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 136, 0.7); }
+
+/* 右上角战术雷达 */
+.radar-container {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  background: var(--hud-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--hud-border);
+  border-radius: 50%;
+  padding: 4px;
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#radar-canvas {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 30, 50, 0.6) 0%, rgba(0, 10, 20, 0.95) 100%);
+}
+
+.radar-label {
+  position: absolute;
+  bottom: -22px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--primary-cyan);
+  font-family: var(--font-cyber);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 243, 255, 0.8);
+}
+
+/* ================= 准星与命中标记 ================= */
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: transform 0.08s ease-out;
+}
+
+.crosshair.bloom {
+  transform: translate(-50%, -50%) scale(1.4);
+}
+
+.ch-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: var(--primary-cyan);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px var(--primary-cyan);
+}
+
+.ch-line {
+  position: absolute;
+  background: rgba(0, 243, 255, 0.8);
+  box-shadow: 0 0 5px rgba(0, 243, 255, 0.6);
+}
+
+.ch-top {
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 8px;
+  transform: translateX(-50%);
+}
+
+.ch-bottom {
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  height: 8px;
+  transform: translateX(-50%);
+}
+
+.ch-left {
+  left: 0;
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+.ch-right {
+  right: 0;
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+/* 击中标记 (Hitmarker) */
+.hitmarker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.05s ease-out;
+}
+
+.hitmarker.active {
+  opacity: 1;
+}
+
+.hitmarker.crit .hm-part {
+  background: var(--neon-yellow) !important;
+  box-shadow: 0 0 8px var(--neon-yellow) !important;
+}
+
+.hm-part {
+  position: absolute;
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+}
+
+.hm-tl { top: 0; left: 50%; width: 2px; height: 8px; transform: translateX(-50%); }
+.hm-tr { bottom: 0; left: 50%; width: 2px; height: 8px; transform: translateX(-50%); }
+.hm-bl { left: 0; top: 50%; width: 8px; height: 2px; transform: translateY(-50%); }
+.hm-br { right: 0; top: 50%; width: 8px; height: 2px; transform: translateY(-50%); }
+
+/* 狙击镜覆盖层 (磁轨炮) */
+#sniper-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 32%, rgba(0, 0, 0, 0.92) 58%, #000 75%);
+  z-index: 12;
+}
+
+.sniper-scope {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 500px;
+  height: 500px;
+  transform: translate(-50%, -50%);
+}
+
+.scope-ring {
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(0, 243, 255, 0.4);
+  border-radius: 50%;
+  box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.2);
+}
+
+.scope-cross-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(0, 243, 255, 0.7);
+  box-shadow: 0 0 8px var(--primary-cyan);
+}
+
+.scope-cross-v {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 100%;
+  background: rgba(0, 243, 255, 0.7);
+  box-shadow: 0 0 8px var(--primary-cyan);
+}
+
+.scope-readout {
+  position: absolute;
+  bottom: -40px;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-cyber);
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--primary-cyan);
+}
+
+/* 受击暗角 */
+#damage-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  box-shadow: inset 0 0 100px rgba(255, 0, 50, 0);
+  transition: box-shadow 0.15s ease-out;
+  z-index: 11;
+}
+
+#damage-vignette.hit {
+  box-shadow: inset 0 0 120px rgba(255, 0, 50, 0.85);
+}
+
+/* 浮动战斗伤害文字 */
+#damage-text-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.floating-dmg {
+  position: absolute;
+  font-family: var(--font-cyber);
+  font-weight: 900;
+  font-size: 22px;
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 12px var(--primary-cyan);
+  transform: translate(-50%, -50%);
+  transition: transform 0.8s ease-out, opacity 0.8s ease-out;
+  opacity: 1;
+}
+
+.floating-dmg.crit {
+  font-size: 32px;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 12px rgba(255, 230, 0, 0.9), 0 0 25px rgba(255, 100, 0, 0.8);
+}
+
+/* 中心波次与连杀公告 */
+.announcement-banner {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.announcement-banner.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.announce-title {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--primary-cyan);
+  text-shadow: 0 0 20px var(--primary-cyan);
+  margin-bottom: 6px;
+}
+
+.announce-subtitle {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #cbd5e1;
+}
+
+/* ================= 左下角状态表 ================= */
+.hud-bottom-left {
+  position: absolute;
+  bottom: 28px;
+  left: 32px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--hud-bg);
+  backdrop-filter: blur(12px);
+  padding: 16px 20px;
+  border-left: 4px solid var(--primary-cyan);
+  border-top: 1px solid var(--hud-border);
+  border-bottom: 1px solid var(--hud-border);
+  border-right: 1px solid rgba(0, 243, 255, 0.15);
+  box-shadow: var(--glass-glow);
+  clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%);
+}
+
+.stat-bar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-name {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.stat-num {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.bar-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.15s ease-out;
+}
+
+.shield-fill {
+  background: linear-gradient(90deg, #0088ff, var(--primary-cyan));
+  box-shadow: 0 0 12px var(--primary-cyan);
+}
+
+.health-fill {
+  background: linear-gradient(90deg, #d90429, #ef233c);
+  box-shadow: 0 0 12px rgba(239, 35, 60, 0.8);
+}
+
+.stamina-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.stamina-fill {
+  height: 100%;
+  background: var(--neon-yellow);
+  box-shadow: 0 0 8px var(--neon-yellow);
+  transition: width 0.05s linear;
+}
+
+.buff-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: rgba(255, 230, 0, 0.15);
+  border: 1px solid var(--neon-yellow);
+  border-radius: 3px;
+  color: var(--neon-yellow);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ================= 右下角武器与弹药 ================= */
+.hud-bottom-right {
+  position: absolute;
+  bottom: 28px;
+  right: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.reload-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 119, 0, 0.2);
+  border: 1px solid var(--neon-orange);
+  padding: 6px 14px;
+  border-radius: 4px;
+  color: var(--neon-orange);
+  font-size: 14px;
+  font-weight: 700;
+  animation: pulse 1s infinite;
+}
+
+.reload-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--neon-orange);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.weapon-info-box {
+  background: var(--hud-bg);
+  backdrop-filter: blur(12px);
+  border-right: 4px solid var(--primary-cyan);
+  border-top: 1px solid var(--hud-border);
+  border-bottom: 1px solid var(--hud-border);
+  border-left: 1px solid rgba(0, 243, 255, 0.15);
+  box-shadow: var(--glass-glow);
+  padding: 12px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  clip-path: polygon(15px 0, 100% 0, 100% 100%, 0 100%, 0 15px);
+}
+
+.weapon-name-display {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+.ammo-display {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ammo-cur {
+  font-size: 40px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+
+.ammo-slash {
+  font-size: 20px;
+  color: #64748b;
+}
+
+.ammo-max {
+  font-size: 22px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.weapon-slots {
+  display: flex;
+  gap: 8px;
+}
+
+.weapon-slot {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 14px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.weapon-slot.active {
+  border-color: var(--primary-cyan);
+  background: rgba(0, 243, 255, 0.15);
+  box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+}
+
+.slot-key {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--primary-cyan);
+}
+
+.slot-name {
+  font-size: 12px;
+  font-family: var(--font-sub);
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+/* ================= 模态窗口与覆盖层 ================= */
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(14px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal-window {
+  width: 90%;
+  max-width: 760px;
+  background: rgba(10, 18, 36, 0.85);
+  border: 1px solid var(--hud-border);
+  box-shadow: 0 0 40px rgba(0, 243, 255, 0.25), inset 0 0 30px rgba(0, 243, 255, 0.05);
+  border-radius: 6px;
+  padding: 36px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-window::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+}
+
+.cyber-header {
+  text-align: center;
+}
+
+.glitch-title {
+  font-family: var(--font-cyber);
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #ffffff;
+  text-shadow: 0 0 15px var(--primary-cyan), 0 0 30px rgba(0, 243, 255, 0.5);
+}
+
+.subtitle {
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: var(--primary-cyan);
+  margin-top: 4px;
+}
+
+.game-brief {
+  background: rgba(0, 0, 0, 0.35);
+  border-left: 3px solid var(--primary-cyan);
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.controls-guide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 18px 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.guide-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guide-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #e2e8f0;
+}
+
+.key-badge {
+  background: rgba(0, 243, 255, 0.12);
+  border: 1px solid rgba(0, 243, 255, 0.4);
+  color: var(--primary-cyan);
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-family: var(--font-cyber);
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 65px;
+  text-align: center;
+}
+
+.weapons-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.wp-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.wp-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-cyan);
+}
+
+.wp-tag {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.wp-title {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-cyber);
+}
+
+.wp-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.cyber-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 14px 28px;
+  font-family: var(--font-cyber);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.cyber-btn.primary {
+  background: linear-gradient(90deg, #005577, #0099bb);
+  border: 1px solid var(--primary-cyan);
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+}
+
+.cyber-btn.primary:hover {
+  background: linear-gradient(90deg, #0077aa, #00ccff);
+  box-shadow: 0 0 35px rgba(0, 243, 255, 0.7);
+  transform: scale(1.02);
+}
+
+.cyber-btn.danger {
+  background: rgba(220, 38, 38, 0.2);
+  border: 1px solid var(--neon-red);
+  color: var(--neon-red);
+}
+
+.cyber-btn.danger:hover {
+  background: rgba(220, 38, 38, 0.4);
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+}
+
+.tip-text {
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* 暂停设置 */
+.pause-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.setting-row input[type="range"] {
+  width: 200px;
+  accent-color: var(--primary-cyan);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+/* 结算卡片 */
+.stats-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.stat-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.sc-label {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.sc-val {
+  font-family: var(--font-cyber);
+  font-size: 26px;
+  font-weight: 900;
+}
+
+/* ================= 移动端虚拟按键与触控 ================= */
+.mobile-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  touch-action: none;
+}
+
+.touch-joystick-zone {
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  width: 150px;
+  height: 150px;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.joystick-base {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: rgba(0, 243, 255, 0.08);
+  border: 2px solid rgba(0, 243, 255, 0.35);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.15);
+}
+
+.joystick-stick {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 243, 255, 0.8), rgba(0, 119, 255, 0.8));
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 15px var(--primary-cyan);
+  position: absolute;
+  transform: translate(0, 0);
+  transition: transform 0.04s ease-out;
+}
+
+.touch-look-zone {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 70%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mobile-action-buttons {
+  position: absolute;
+  bottom: 30px;
+  right: 25px;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  pointer-events: auto;
+}
+
+.touch-btn {
+  background: rgba(10, 20, 40, 0.8);
+  border: 1.5px solid var(--primary-cyan);
+  border-radius: 50%;
+  color: #ffffff;
+  font-family: var(--font-cyber);
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.touch-btn:active {
+  background: rgba(0, 243, 255, 0.35);
+  transform: scale(0.92);
+}
+
+.touch-btn-fire {
+  width: 78px;
+  height: 78px;
+  font-size: 16px;
+  border-color: var(--neon-red);
+  background: rgba(255, 51, 68, 0.25);
+  box-shadow: 0 0 25px rgba(255, 51, 68, 0.5);
+}
+
+.touch-btn-fire:active {
+  background: rgba(255, 51, 68, 0.6);
+}
+
+.mobile-sub-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mobile-sub-buttons .touch-btn {
+  width: 48px;
+  height: 48px;
+  font-size: 11px;
+}
+
+@media (max-width: 768px) {
+  .hud-top-bar {
+    top: 10px;
+    gap: 8px;
+  }
+  .hud-panel {
+    padding: 4px 10px;
+  }
+  .hud-label {
+    font-size: 9px;
+  }
+  .hud-value {
+    font-size: 16px;
+  }
+  .radar-container {
+    top: 10px;
+    right: 10px;
+    transform: scale(0.75);
+    transform-origin: top right;
+  }
+  .hud-bottom-left {
+    bottom: 190px;
+    left: 12px;
+    width: 220px;
+    padding: 10px 14px;
+    transform: scale(0.85);
+    transform-origin: bottom left;
+  }
+  .hud-bottom-right {
+    bottom: 190px;
+    right: 12px;
+    transform: scale(0.85);
+    transform-origin: bottom right;
+  }
+  .modal-window {
+    padding: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .glitch-title {
+    font-size: 24px;
+  }
+  .controls-guide, .weapons-preview {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>赛博前线 3D - CYBERSTRIKE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <!-- 3D 渲染容器 -->
+  <div id="game-container"></div>
+
+  <!-- 游戏内 HUD 层 -->
+  <div id="hud" class="hidden">
+    <!-- 顶部状态栏 -->
+    <div class="hud-top-bar">
+      <div class="hud-panel wave-panel">
+        <span class="hud-label">作战波次</span>
+        <span id="wave-display" class="hud-value neon-cyan">第 1 波</span>
+      </div>
+      <div class="hud-panel score-panel">
+        <span class="hud-label">作战积分</span>
+        <span id="score-display" class="hud-value neon-yellow">0</span>
+      </div>
+      <div class="hud-panel enemies-panel">
+        <span class="hud-label">剩余威胁</span>
+        <span id="enemies-display" class="hud-value neon-red">0</span>
+      </div>
+    </div>
+
+    <!-- 右上角战术雷达 -->
+    <div class="radar-container">
+      <canvas id="radar-canvas" width="160" height="160"></canvas>
+      <div class="radar-label">战术雷达 50M</div>
+    </div>
+
+    <!-- 准星系统 -->
+    <div id="crosshair" class="crosshair">
+      <div class="ch-dot"></div>
+      <div class="ch-line ch-top"></div>
+      <div class="ch-line ch-bottom"></div>
+      <div class="ch-line ch-left"></div>
+      <div class="ch-line ch-right"></div>
+      <!-- 击中提示十字标记 -->
+      <div id="hitmarker" class="hitmarker">
+        <div class="hm-part hm-tl"></div>
+        <div class="hm-part hm-tr"></div>
+        <div class="hm-part hm-bl"></div>
+        <div class="hm-part hm-br"></div>
+      </div>
+    </div>
+
+    <!-- 狙击镜覆盖层 (磁轨炮开镜) -->
+    <div id="sniper-overlay" class="hidden">
+      <div class="sniper-scope">
+        <div class="scope-cross-h"></div>
+        <div class="scope-cross-v"></div>
+        <div class="scope-ring"></div>
+        <div class="scope-corners"></div>
+        <div class="scope-readout">ZOOM 2.5X // 锁定轨道</div>
+      </div>
+    </div>
+
+    <!-- 受击红框与指示器 -->
+    <div id="damage-vignette"></div>
+    <div id="damage-indicator-container"></div>
+
+    <!-- 连杀与波次中心提示 -->
+    <div id="announcement-banner" class="announcement-banner">
+      <div id="announce-title" class="announce-title"></div>
+      <div id="announce-subtitle" class="announce-subtitle"></div>
+    </div>
+
+    <!-- 浮动战斗伤害文字容器 -->
+    <div id="damage-text-container"></div>
+
+    <!-- 左下角：生命、护盾与体力量表 -->
+    <div class="hud-bottom-left">
+      <!-- 护盾槽 -->
+      <div class="stat-bar-group">
+        <div class="stat-header">
+          <span class="stat-name">能量护盾</span>
+          <span id="shield-text" class="stat-num">100 / 100</span>
+        </div>
+        <div class="bar-track">
+          <div id="shield-bar" class="bar-fill shield-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- 生命槽 -->
+      <div class="stat-bar-group">
+        <div class="stat-header">
+          <span class="stat-name">机体装甲</span>
+          <span id="health-text" class="stat-num">100 / 100</span>
+        </div>
+        <div class="bar-track">
+          <div id="health-bar" class="bar-fill health-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- 冲刺耐力条 -->
+      <div class="stamina-track">
+        <div id="stamina-bar" class="stamina-fill" style="width: 100%;"></div>
+      </div>
+
+      <!-- Buff 状态栏 -->
+      <div id="buff-indicator" class="buff-indicator hidden">
+        <span class="buff-icon">⚡</span>
+        <span id="buff-text">过载超频 (双倍伤害)</span>
+        <span id="buff-timer">10s</span>
+      </div>
+    </div>
+
+    <!-- 右下角：武器槽与弹药系统 -->
+    <div class="hud-bottom-right">
+      <!-- 换弹提示 -->
+      <div id="reload-indicator" class="reload-indicator hidden">
+        <div class="reload-spinner"></div>
+        <span>装填中...</span>
+      </div>
+
+      <div class="weapon-info-box">
+        <div class="weapon-name-display" id="weapon-name">等离子冲锋枪</div>
+        <div class="ammo-display">
+          <span id="ammo-cur" class="ammo-cur">35</span>
+          <span class="ammo-slash">/</span>
+          <span id="ammo-max" class="ammo-max">∞</span>
+        </div>
+      </div>
+
+      <!-- 武器槽切换 -->
+      <div class="weapon-slots">
+        <div class="weapon-slot active" data-slot="1" id="slot-1">
+          <span class="slot-key">1</span>
+          <span class="slot-name">冲锋枪</span>
+        </div>
+        <div class="weapon-slot" data-slot="2" id="slot-2">
+          <span class="slot-key">2</span>
+          <span class="slot-name">霰弹枪</span>
+        </div>
+        <div class="weapon-slot" data-slot="3" id="slot-3">
+          <span class="slot-key">3</span>
+          <span class="slot-name">磁轨炮</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 移动端虚拟触控层 -->
+    <div id="mobile-controls" class="mobile-controls hidden">
+      <div id="touch-joystick-zone" class="touch-joystick-zone">
+        <div id="joystick-base" class="joystick-base">
+          <div id="joystick-stick" class="joystick-stick"></div>
+        </div>
+      </div>
+      <div id="touch-look-zone" class="touch-look-zone"></div>
+      <div class="mobile-action-buttons">
+        <button id="touch-btn-fire" class="touch-btn touch-btn-fire">开火</button>
+        <div class="mobile-sub-buttons">
+          <button id="touch-btn-ads" class="touch-btn">机瞄</button>
+          <button id="touch-btn-jump" class="touch-btn">跳跃</button>
+          <button id="touch-btn-reload" class="touch-btn">换弹</button>
+          <button id="touch-btn-switch" class="touch-btn">切枪</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 欢迎 / 开始界面 -->
+  <div id="start-screen" class="modal-overlay">
+    <div class="modal-window">
+      <div class="cyber-header">
+        <div class="glitch-title" data-text="CYBERSTRIKE 3D">CYBERSTRIKE 3D</div>
+        <div class="subtitle">赛博前线：霓虹歼灭战</div>
+      </div>
+
+      <div class="game-brief">
+        警告：中央反应堆被叛变机械军团入侵！消灭所有无人机、潜伏者与泰坦机甲，誓死守护核心。
+      </div>
+
+      <div class="controls-guide">
+        <div class="guide-col">
+          <div class="guide-item"><span class="key-badge">W A S D</span> 移动走位</div>
+          <div class="guide-item"><span class="key-badge">Shift</span> 战术冲刺</div>
+          <div class="guide-item"><span class="key-badge">Space</span> 弹跳 / 踩跳跃垫</div>
+          <div class="guide-item"><span class="key-badge">鼠标移动</span> 环顾视角 (需锁定)</div>
+        </div>
+        <div class="guide-col">
+          <div class="guide-item"><span class="key-badge">鼠标左键</span> 开火射击</div>
+          <div class="guide-item"><span class="key-badge">鼠标右键</span> 精确瞄准 (磁轨炮开镜)</div>
+          <div class="guide-item"><span class="key-badge">R</span> 手动装填弹药</div>
+          <div class="guide-item"><span class="key-badge">1 / 2 / 3</span> 切换未来武器</div>
+        </div>
+      </div>
+
+      <div class="weapons-preview">
+        <div class="wp-card">
+          <div class="wp-tag">主武器 1</div>
+          <div class="wp-title neon-cyan">等离子冲锋枪</div>
+          <div class="wp-desc">高射速电浆弹，容量大，适合中近距离压制</div>
+        </div>
+        <div class="wp-card">
+          <div class="wp-tag">主武器 2</div>
+          <div class="wp-title neon-orange">碎裂重型霰弹枪</div>
+          <div class="wp-desc">8发高热霰弹，贴脸爆发极高，强冲击力</div>
+        </div>
+        <div class="wp-card">
+          <div class="wp-tag">主武器 3</div>
+          <div class="wp-title neon-magenta">湮灭磁轨炮</div>
+          <div class="wp-desc">长程高能穿透射线，右键高倍镜，一击必杀</div>
+        </div>
+      </div>
+
+      <button id="btn-start" class="cyber-btn primary">
+        <span class="btn-glow"></span>
+        <span class="btn-text">点击开始接入战场 (进入游戏)</span>
+      </button>
+
+      <div class="tip-text">提示：点击后将锁定鼠标视角，按 [Esc] 可随时暂停与解锁鼠标</div>
+    </div>
+  </div>
+
+  <!-- 暂停界面 -->
+  <div id="pause-screen" class="modal-overlay hidden">
+    <div class="modal-window">
+      <div class="cyber-header">
+        <div class="glitch-title">作战已暂停</div>
+      </div>
+      <div class="pause-settings">
+        <div class="setting-row">
+          <label>鼠标灵敏度: <span id="sens-value">1.0</span></label>
+          <input type="range" id="sens-slider" min="0.2" max="3.0" step="0.1" value="1.0">
+        </div>
+        <div class="setting-row">
+          <label>主音量: <span id="volume-value">80%</span></label>
+          <input type="range" id="volume-slider" min="0" max="100" step="5" value="80">
+        </div>
+        <div class="setting-row">
+          <label for="invert-y-checkbox">反转垂直视角 (Invert Y):</label>
+          <input type="checkbox" id="invert-y-checkbox" style="width: 20px; height: 20px; accent-color: var(--primary-cyan); cursor: pointer;">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-resume" class="cyber-btn primary">继续战斗</button>
+        <button id="btn-restart-pause" class="cyber-btn danger">重新开始</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏结束界面 -->
+  <div id="gameover-screen" class="modal-overlay hidden">
+    <div class="modal-window">
+      <div class="cyber-header">
+        <div class="glitch-title neon-red" data-text="机体损毁 · 作战失败">机体损毁 · 作战失败</div>
+        <div class="subtitle">与指挥中心的神经元连接中断</div>
+      </div>
+
+      <div class="stats-summary">
+        <div class="stat-card">
+          <span class="sc-label">最终生存波次</span>
+          <span id="final-wave" class="sc-val neon-cyan">第 1 波</span>
+        </div>
+        <div class="stat-card">
+          <span class="sc-label">消灭敌军总数</span>
+          <span id="final-kills" class="sc-val neon-red">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="sc-label">最终作战得分</span>
+          <span id="final-score" class="sc-val neon-yellow">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="sc-label">历史最高得分</span>
+          <span id="high-score" class="sc-val neon-magenta">0</span>
+        </div>
+      </div>
+
+      <button id="btn-restart" class="cyber-btn primary">
+        <span class="btn-glow"></span>
+        <span class="btn-text">重启机甲 · 重新挑战</span>
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
