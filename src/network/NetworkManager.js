@@ -50,19 +50,22 @@ export class NetworkManager {
     this.onError = null;            // (errorMsg)
     this.onSignalingStatusChange = null; // (status: 'connecting'|'ready'|'switched'|'offline', label: string)
 
-    // WebRTC ICE 服务器 (Google 免费 STUN 矩阵)
+    // WebRTC ICE 服务器矩阵（包含国内腾讯云/小米/B站等高可用 STUN 与国际 Google STUN）
     this.iceServers = [
+      { urls: 'stun:stun.qq.com:3478' },
+      { urls: 'stun:stun.miwifi.com:3478' },
+      { urls: 'stun:stun.chat.bilibili.com:3478' },
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' }
+      { urls: 'stun:stun2.l.google.com:19302' }
     ];
 
     // 心跳与延迟
     this.pingInterval = null;
     this.ping = 28;
 
+    // 大厅房间广播定时器
+    this.lobbyBroadcastTimer = null;
     // 公共信令大厅已发现房间缓存: roomId -> { roomId, playerCount, maxPlayers, hostName, lastSeen }
     this.discoveredPublicRooms = new Map();
 
@@ -88,6 +91,9 @@ export class NetworkManager {
               lastSeen: Date.now()
             });
             this.emitCachedRooms();
+          } else if (msg.type === 'room_closed') {
+            this.discoveredPublicRooms.delete(msg.roomId);
+            this.emitCachedRooms();
           }
           return;
         }
@@ -99,7 +105,7 @@ export class NetworkManager {
 
           switch (msg.type) {
             case 'hello_peer': {
-              // 新玩家进房向全员打招呼：当前房间成员回复自己的信息
+              // 新玩家进房向全员报到：当前房间成员回复自己的信息
               const existingList = Array.from(this.peers.values()).map(p => ({
                 peerId: p.id,
                 name: p.name,
@@ -121,6 +127,7 @@ export class NetworkManager {
                 peers: existingList
               });
 
+              // 老玩家在 3D 场景中创建该加入者模型
               if (this.onPeerJoined) {
                 this.onPeerJoined({
                   peerId: msg.fromPeerId,
@@ -134,11 +141,21 @@ export class NetworkManager {
             case 'welcome_peer': {
               // 仅处理发给自己的欢迎应答
               if (msg.targetPeerId === this.localPeerId) {
-                // 如果这是加入房间后收到的第一份现有成员清单
                 if (msg.peers && msg.peers.length > 0) {
                   for (const p of msg.peers) {
-                    if (p.peerId !== this.localPeerId && !this.peers.has(p.peerId)) {
-                      this.initiatePeerConnection(p.peerId, p.name, p.color);
+                    if (p.peerId !== this.localPeerId) {
+                      // 1. 初始化 WebRTC 直连发起
+                      if (!this.peers.has(p.peerId)) {
+                        this.initiatePeerConnection(p.peerId, p.name, p.color);
+                      }
+                      // 2. 关键通知：新玩家在场景中立即创建老玩家的 3D 模型！
+                      if (this.onPeerJoined) {
+                        this.onPeerJoined({
+                          peerId: p.peerId,
+                          name: p.name,
+                          color: p.color
+                        });
+                      }
                     }
                   }
                 }
@@ -221,8 +238,8 @@ export class NetworkManager {
       return this.useEdgeTransport();
     }
 
-    // 3. AUTO 模式：智能探测
-    // 若在本地开发（localhost/127.0.0.1），优先 Edge
+    // 3. AUTO 模式：
+    // 若在本地开发（localhost/127.0.0.1），使用本地 Edge（单一 Node 进程内存）
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (isLocalhost) {
       try {
@@ -234,14 +251,9 @@ export class NetworkManager {
       }
     }
 
-    // 在生产环境（Cloudflare Pages 或其他），优先尝试 Edge（快速探测 1 秒），若失败立即无缝自愈至公共云通道
-    try {
-      await this.useEdgeTransport(1000);
-    } catch (err) {
-      console.info('[NetworkManager] Cloudflare 边缘接口未激活或无状态，已全自动平滑启用全球自愈信令云！');
-      this.notifyStatus('switched', '已自动切换至全球自愈信令云');
-      return this.usePublicTransport();
-    }
+    // 在生产环境（Cloudflare 等 Serverless 无状态架构），直接使用全球高可用公共信令通道，
+    // 彻底消除跨机房/跨边缘实例内存隔离壁垒！
+    return this.usePublicTransport();
   }
 
   /**
@@ -399,7 +411,6 @@ export class NetworkManager {
     try {
       await this.connectSignaling();
     } catch (e) {
-      // 静默处理，不惊扰玩家
       if (this.onRoomListReceived) this.onRoomListReceived([]);
       return;
     }
@@ -435,13 +446,21 @@ export class NetworkManager {
       const roomTopic = `kittystrike/v2/room/${this.roomId}`;
       this.publicRelay.subscribe(roomTopic);
 
-      // 向大厅广播新房间
-      this.publicRelay.publish('kittystrike/v2/lobby', {
-        type: 'room_announce',
-        roomId: this.roomId,
-        playerCount: 1,
-        hostName: this.localName
-      });
+      // 周期性向大厅广播当前房间信息
+      const broadcastLobby = () => {
+        if (this.roomId && this.isHost) {
+          this.publicRelay.publish('kittystrike/v2/lobby', {
+            type: 'room_announce',
+            roomId: this.roomId,
+            playerCount: this.peers.size + 1,
+            hostName: this.localName
+          });
+        }
+      };
+
+      broadcastLobby();
+      if (this.lobbyBroadcastTimer) clearInterval(this.lobbyBroadcastTimer);
+      this.lobbyBroadcastTimer = setInterval(broadcastLobby, 3500);
 
       if (this.onRoomJoined) {
         this.onRoomJoined(this.roomId, []);
@@ -473,14 +492,22 @@ export class NetworkManager {
       const roomTopic = `kittystrike/v2/room/${this.roomId}`;
       this.publicRelay.subscribe(roomTopic);
 
-      // 发送加入通知
-      this.publicRelay.publish(roomTopic, {
-        type: 'hello_peer',
-        roomId: this.roomId,
-        fromPeerId: this.localPeerId,
-        name: this.localName,
-        color: this.localColor
-      });
+      // 发送加入通知：通过多次轻度重传，确保 MQTT Broker 订阅完全生效并被房主收到
+      const sendHello = () => {
+        if (this.roomId === roomId) {
+          this.publicRelay.publish(roomTopic, {
+            type: 'hello_peer',
+            roomId: this.roomId,
+            fromPeerId: this.localPeerId,
+            name: this.localName,
+            color: this.localColor
+          });
+        }
+      };
+
+      setTimeout(sendHello, 120);
+      setTimeout(sendHello, 600);
+      setTimeout(sendHello, 1600);
 
       if (this.onRoomJoined) {
         this.onRoomJoined(this.roomId, []);
@@ -492,6 +519,11 @@ export class NetworkManager {
    * 离开房间
    */
   leaveRoom() {
+    if (this.lobbyBroadcastTimer) {
+      clearInterval(this.lobbyBroadcastTimer);
+      this.lobbyBroadcastTimer = null;
+    }
+
     if (this.roomId) {
       if (this.activeTransport === 'EDGE' && this.edgeWs && this.edgeWs.readyState === WebSocket.OPEN) {
         this.edgeWs.send(JSON.stringify({ type: 'leave_room' }));
@@ -501,6 +533,12 @@ export class NetworkManager {
           type: 'peer_left',
           peerId: this.localPeerId
         });
+        if (this.isHost) {
+          this.publicRelay.publish('kittystrike/v2/lobby', {
+            type: 'room_closed',
+            roomId: this.roomId
+          });
+        }
         this.publicRelay.unsubscribe(roomTopic);
       }
     }
@@ -618,7 +656,8 @@ export class NetworkManager {
       color,
       pc,
       dc: null,
-      isChannelReady: false
+      isChannelReady: false,
+      pendingCandidates: []
     };
     this.peers.set(targetPeerId, peerWrapper);
 
@@ -658,7 +697,8 @@ export class NetworkManager {
             color: '#ff69b4',
             pc,
             dc: null,
-            isChannelReady: false
+            isChannelReady: false,
+            pendingCandidates: []
           };
           this.peers.set(fromPeerId, peerWrapper);
 
@@ -667,9 +707,29 @@ export class NetworkManager {
           };
 
           this.setupPeerConnectionEvents(peerWrapper);
+
+          // 确保新加入的模型在老玩家场景中也已存在
+          if (this.onPeerJoined) {
+            this.onPeerJoined({
+              peerId: fromPeerId,
+              name: peerWrapper.name,
+              color: peerWrapper.color
+            });
+          }
         }
 
         await peerWrapper.pc.setRemoteDescription(sdp);
+
+        // 清空已缓冲的 ICE candidates
+        if (peerWrapper.pendingCandidates && peerWrapper.pendingCandidates.length > 0) {
+          for (const cand of peerWrapper.pendingCandidates) {
+            try {
+              await peerWrapper.pc.addIceCandidate(new RTCIceCandidate(cand));
+            } catch (e) {}
+          }
+          peerWrapper.pendingCandidates = [];
+        }
+
         const answer = await peerWrapper.pc.createAnswer();
         await peerWrapper.pc.setLocalDescription(answer);
 
@@ -679,14 +739,29 @@ export class NetworkManager {
       } else if (sdp.type === 'answer') {
         if (peerWrapper && peerWrapper.pc) {
           await peerWrapper.pc.setRemoteDescription(sdp);
+
+          // 清空已缓冲的 ICE candidates
+          if (peerWrapper.pendingCandidates && peerWrapper.pendingCandidates.length > 0) {
+            for (const cand of peerWrapper.pendingCandidates) {
+              try {
+                await peerWrapper.pc.addIceCandidate(new RTCIceCandidate(cand));
+              } catch (e) {}
+            }
+            peerWrapper.pendingCandidates = [];
+          }
         }
       }
     } else if (signalData.candidate) {
       if (peerWrapper && peerWrapper.pc) {
-        try {
-          await peerWrapper.pc.addIceCandidate(new RTCIceCandidate(signalData.candidate));
-        } catch (e) {
-          console.warn('[NetworkManager] 附加 ICE 候选异常:', e);
+        if (!peerWrapper.pc.remoteDescription) {
+          peerWrapper.pendingCandidates = peerWrapper.pendingCandidates || [];
+          peerWrapper.pendingCandidates.push(signalData.candidate);
+        } else {
+          try {
+            await peerWrapper.pc.addIceCandidate(new RTCIceCandidate(signalData.candidate));
+          } catch (e) {
+            console.warn('[NetworkManager] 附加 ICE 候选异常:', e);
+          }
         }
       }
     }
@@ -722,11 +797,20 @@ export class NetworkManager {
 
     dc.onopen = () => {
       peerWrapper.isChannelReady = true;
+      // 双方互发 intro，确认名字与颜色
       this.sendDirect(peerWrapper, {
         t: 'intro',
         name: this.localName,
         color: this.localColor
       });
+      // 再次确认该玩家已在场景渲染
+      if (this.onPeerJoined) {
+        this.onPeerJoined({
+          peerId: peerWrapper.id,
+          name: peerWrapper.name,
+          color: peerWrapper.color
+        });
+      }
     };
 
     dc.onclose = () => {
@@ -750,6 +834,14 @@ export class NetworkManager {
         case 'intro': {
           peerWrapper.name = msg.name || peerWrapper.name;
           peerWrapper.color = msg.color || peerWrapper.color;
+          // 确保名字和颜色已同步
+          if (this.onPeerJoined) {
+            this.onPeerJoined({
+              peerId: peerWrapper.id,
+              name: peerWrapper.name,
+              color: peerWrapper.color
+            });
+          }
           break;
         }
 

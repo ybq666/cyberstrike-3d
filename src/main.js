@@ -476,6 +476,7 @@ class Game {
     };
 
     this.network.onPeerJoined = (peer) => {
+      if (this.remotePlayers.has(peer.peerId)) return;
       const rp = new RemotePlayer(peer.peerId, peer.name, peer.color, this.renderer.scene);
       this.remotePlayers.set(peer.peerId, rp);
       this.playerScores.set(peer.peerId, { kills: 0, deaths: 0, score: 0 });
