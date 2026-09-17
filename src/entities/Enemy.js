@@ -3,7 +3,7 @@ import * as THREE from 'three';
 export const ENEMY_TYPES = {
   DRONE: {
     id: 'drone',
-    name: '巡航侦察无人机',
+    name: '🎀 飞天天使猫咪玩偶',
     hp: 70,
     speed: 7.5,
     score: 100,
@@ -17,7 +17,7 @@ export const ENEMY_TYPES = {
   },
   STALKER: {
     id: 'stalker',
-    name: '机械潜伏者',
+    name: '🧸 捣蛋发条泰迪熊',
     hp: 95,
     speed: 10.5,
     score: 150,
@@ -30,7 +30,7 @@ export const ENEMY_TYPES = {
   },
   TITAN: {
     id: 'titan',
-    name: '泰坦重装机甲',
+    name: '👑 草莓女王巨型甜心熊',
     hp: 650,
     speed: 4.8,
     score: 800,
@@ -45,12 +45,29 @@ export const ENEMY_TYPES = {
 };
 
 export class Enemy {
-  constructor(scene, typeKey, spawnPos) {
+  constructor(arg1, arg2, arg3) {
+    let scene, typeKey, spawnPos;
+    if (typeof arg1 === 'string') {
+      typeKey = arg1;
+      scene = arg2;
+      spawnPos = (arg3 && arg3.isVector3) ? arg3 : null;
+    } else {
+      scene = arg1;
+      typeKey = arg2;
+      spawnPos = (arg3 && arg3.isVector3) ? arg3 : null;
+    }
+
     this.scene = scene;
     this.typeDef = ENEMY_TYPES[typeKey] || ENEMY_TYPES.DRONE;
     this.typeKey = typeKey;
 
-    this.position = spawnPos.clone();
+    if (!spawnPos) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 32 + Math.random() * 8;
+      this.position = new THREE.Vector3(Math.cos(angle) * dist, 1.5, Math.sin(angle) * dist);
+    } else {
+      this.position = spawnPos.clone();
+    }
     this.maxHp = this.typeDef.hp;
     this.hp = this.maxHp;
     this.radius = this.typeDef.radius;
@@ -58,7 +75,7 @@ export class Enemy {
     this.speed = this.typeDef.speed;
 
     this.isDead = false;
-    this.attackTimer = Math.random() * 1.5; // Randomize start attack
+    this.attackTimer = Math.random() * 1.5;
     this.flinchTimer = 0;
 
     // Movement state
@@ -77,97 +94,314 @@ export class Enemy {
     this.scene.add(this.group);
   }
 
-  buildModel() {
-    const metalMat = new THREE.MeshStandardMaterial({
-      color: 0x1a2130,
-      metalness: 0.85,
-      roughness: 0.35
+  // Helper to create a Hello Kitty style mini ribbon bow
+  createRibbonBow(scale = 1.0, ribbonColor = 0xff2e63) {
+    const bowGroup = new THREE.Group();
+    const bowMat = new THREE.MeshStandardMaterial({
+      color: ribbonColor,
+      roughness: 0.35,
+      metalness: 0.1
     });
 
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
+    const knotGeo = new THREE.SphereGeometry(0.18 * scale, 10, 10);
+    const knot = new THREE.Mesh(knotGeo, bowMat);
+    knot.scale.set(1.1, 1.0, 0.7);
+    bowGroup.add(knot);
+
+    [-1, 1].forEach(side => {
+      const loopGeo = new THREE.ConeGeometry(0.3 * scale, 0.55 * scale, 12);
+      const loop = new THREE.Mesh(loopGeo, bowMat);
+      loop.rotation.z = side * (Math.PI / 2 + 0.15);
+      loop.scale.set(1, 0.45, 0.9);
+      loop.position.set(side * 0.3 * scale, 0, 0);
+      bowGroup.add(loop);
+    });
+
+    return bowGroup;
+  }
+
+  buildModel() {
+    const plushWhiteMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.6,
+      metalness: 0.05
+    });
+
+    const plushPinkMat = new THREE.MeshStandardMaterial({
+      color: 0xff85a2,
+      roughness: 0.55,
+      metalness: 0.05
+    });
+
+    const teddyBrownMat = new THREE.MeshStandardMaterial({
+      color: 0xd4a373,
+      roughness: 0.65,
+      metalness: 0.05
+    });
+
+    const teddyCreamMat = new THREE.MeshStandardMaterial({
+      color: 0xffedd8,
+      roughness: 0.55,
+      metalness: 0.05
+    });
+
+    const darkEyeMat = new THREE.MeshBasicMaterial({ color: 0x221c1d });
+    const noseMat = new THREE.MeshBasicMaterial({ color: 0xffd166 });
+    const crownMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.6, roughness: 0.2 });
 
     if (this.typeKey === 'DRONE') {
-      // 1. Drone Model: Core sphere + outer rotating gyro ring
-      const coreGeo = new THREE.SphereGeometry(0.7, 16, 16);
-      this.coreMesh = new THREE.Mesh(coreGeo, metalMat);
+      // 1. Angel Kitty Balloon: Cute round white cat head + angel wings + halo + ear bow
+      const headGeo = new THREE.SphereGeometry(0.72, 16, 16);
+      headGeo.scale(1.0, 0.92, 0.95);
+      this.coreMesh = new THREE.Mesh(headGeo, plushWhiteMat);
       this.group.add(this.coreMesh);
+      this.baseColorHex = 0xffffff;
 
-      const eyeGeo = new THREE.SphereGeometry(0.25, 12, 12);
-      const eye = new THREE.Mesh(eyeGeo, eyeMat);
-      eye.position.set(0, 0, -0.6);
-      this.group.add(eye);
+      // Cute pointed cat ears
+      [-1, 1].forEach(side => {
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.42, 6), plushWhiteMat);
+        ear.rotation.y = Math.PI / 4;
+        ear.rotation.z = side * -0.25;
+        ear.position.set(side * 0.42, 0.65, 0);
+        this.group.add(ear);
 
-      // Rotating Gyro Ring
-      const ringGeo = new THREE.TorusGeometry(1.0, 0.08, 8, 24);
-      this.gyroRing = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x00f3ff }));
+        const inner = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.3, 4), plushPinkMat);
+        inner.rotation.y = Math.PI / 4;
+        inner.rotation.z = side * -0.25;
+        inner.position.set(side * 0.42, 0.65, 0.06);
+        this.group.add(inner);
+      });
+
+      // Hello Kitty Red/Pink Bow beside the left ear
+      const bow = this.createRibbonBow(0.95, 0xff2e63);
+      bow.position.set(-0.48, 0.72, 0.18);
+      bow.rotation.z = -0.3;
+      this.group.add(bow);
+
+      // Cute anime button eyes
+      [-1, 1].forEach(side => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), darkEyeMat);
+        eye.scale.set(0.9, 1.3, 0.5);
+        eye.position.set(side * 0.25, 0.05, -0.66);
+        this.group.add(eye);
+      });
+
+      // Cute button nose
+      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), noseMat);
+      nose.scale.set(1.2, 0.8, 0.6);
+      nose.position.set(0, -0.04, -0.69);
+      this.group.add(nose);
+
+      // Flapping Angel Wings
+      this.wings = [];
+      [-1, 1].forEach(side => {
+        const wingGroup = new THREE.Group();
+        const wingGeo = new THREE.ConeGeometry(0.25, 0.75, 6);
+        const wing = new THREE.Mesh(wingGeo, plushWhiteMat);
+        wing.rotation.z = side * (Math.PI / 2);
+        wing.scale.set(1, 0.35, 0.85);
+        wingGroup.add(wing);
+        wingGroup.position.set(side * 0.75, 0.1, 0.1);
+        this.group.add(wingGroup);
+        this.wings.push({ group: wingGroup, side });
+      });
+
+      // Floating sweet halo
+      const haloGeo = new THREE.TorusGeometry(0.5, 0.04, 8, 24);
+      const haloMat = new THREE.MeshBasicMaterial({ color: 0xffe066 });
+      this.gyroRing = new THREE.Mesh(haloGeo, haloMat);
+      this.gyroRing.rotation.x = Math.PI / 2;
+      this.gyroRing.position.y = 1.05;
       this.group.add(this.gyroRing);
 
     } else if (this.typeKey === 'STALKER') {
-      // 2. Stalker Model: sleek predatory body with 4 arachnid legs
-      const bodyGeo = new THREE.ConeGeometry(0.6, 1.4, 6);
-      bodyGeo.rotateX(Math.PI / 2);
-      this.coreMesh = new THREE.Mesh(bodyGeo, metalMat);
-      this.coreMesh.position.y = 0.7;
+      // 2. Mischievous Wind-up Teddy Bear: Fluffy honey bear with bow tie & rotating wind-up key
+      // Bear Torso
+      const torsoGeo = new THREE.SphereGeometry(0.55, 14, 14);
+      torsoGeo.scale(1.0, 1.2, 0.9);
+      this.coreMesh = new THREE.Mesh(torsoGeo, teddyBrownMat);
+      this.coreMesh.position.y = 0.65;
       this.group.add(this.coreMesh);
+      this.baseColorHex = 0xd4a373;
 
-      // Red visor eyes
-      const visorGeo = new THREE.BoxGeometry(0.5, 0.15, 0.3);
-      const visor = new THREE.Mesh(visorGeo, eyeMat);
-      visor.position.set(0, 0.75, -0.65);
-      this.group.add(visor);
+      // Cream belly patch
+      const belly = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), teddyCreamMat);
+      belly.scale.set(0.9, 1.0, 0.3);
+      belly.position.set(0, 0.62, -0.42);
+      this.group.add(belly);
 
-      // 4 Angular Legs
+      // Bear Head
+      const headGeo = new THREE.SphereGeometry(0.42, 14, 14);
+      const head = new THREE.Mesh(headGeo, teddyBrownMat);
+      head.position.set(0, 1.25, 0);
+      this.group.add(head);
+
+      // Round bear ears
+      [-1, 1].forEach(side => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), teddyBrownMat);
+        ear.position.set(side * 0.32, 1.55, 0);
+        this.group.add(ear);
+
+        const earInner = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), teddyCreamMat);
+        earInner.position.set(side * 0.32, 1.55, -0.08);
+        this.group.add(earInner);
+      });
+
+      // Snout
+      const snout = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), teddyCreamMat);
+      snout.scale.set(1.2, 0.9, 0.8);
+      snout.position.set(0, 1.18, -0.38);
+      this.group.add(snout);
+
+      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), darkEyeMat);
+      nose.position.set(0, 1.22, -0.49);
+      this.group.add(nose);
+
+      // Eyes
+      [-1, 1].forEach(side => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), darkEyeMat);
+        eye.position.set(side * 0.16, 1.32, -0.36);
+        this.group.add(eye);
+      });
+
+      // Sweet Red Bow Tie at the neck!
+      const bowTie = this.createRibbonBow(0.7, 0xff2e63);
+      bowTie.position.set(0, 1.0, -0.38);
+      this.group.add(bowTie);
+
+      // Golden wind-up key on the back
+      this.windUpKey = new THREE.Group();
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.2, 8), crownMat);
+      stem.rotation.x = Math.PI / 2;
+      this.windUpKey.add(stem);
+      const ring1 = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.03, 8, 16), crownMat);
+      ring1.position.z = 0.16;
+      this.windUpKey.add(ring1);
+      this.windUpKey.position.set(0, 0.75, 0.5);
+      this.group.add(this.windUpKey);
+
+      // 4 Waddling Arms & Legs
       this.legs = [];
-      const legGeo = new THREE.CylinderGeometry(0.06, 0.03, 1.0, 6);
-      for (let i = 0; i < 4; i++) {
-        const leg = new THREE.Mesh(legGeo, metalMat);
-        const signX = (i % 2 === 0) ? 1 : -1;
-        const signZ = (i < 2) ? 1 : -1;
-        leg.position.set(signX * 0.6, 0.4, signZ * 0.5);
-        leg.rotation.z = signX * 0.5;
-        this.group.add(leg);
-        this.legs.push(leg);
-      }
+      const limbGeo = new THREE.CapsuleGeometry(0.12, 0.35, 6, 8);
+      // Arms
+      const leftArm = new THREE.Mesh(limbGeo, teddyBrownMat);
+      leftArm.position.set(-0.5, 0.75, -0.15);
+      leftArm.rotation.x = -0.4;
+      this.group.add(leftArm);
+      const rightArm = new THREE.Mesh(limbGeo, teddyBrownMat);
+      rightArm.position.set(0.5, 0.75, -0.15);
+      rightArm.rotation.x = -0.4;
+      this.group.add(rightArm);
+
+      // Legs
+      const leftLeg = new THREE.Mesh(limbGeo, teddyBrownMat);
+      leftLeg.position.set(-0.25, 0.22, 0);
+      this.group.add(leftLeg);
+      const rightLeg = new THREE.Mesh(limbGeo, teddyBrownMat);
+      rightLeg.position.set(0.25, 0.22, 0);
+      this.group.add(rightLeg);
+
+      this.legs.push(leftArm, rightArm, leftLeg, rightLeg);
 
     } else if (this.typeKey === 'TITAN') {
-      // 3. Titan Mech: Massive bipedal war mech with twin shoulder cannons
-      const torsoGeo = new THREE.BoxGeometry(2.4, 2.2, 1.8);
-      this.coreMesh = new THREE.Mesh(torsoGeo, metalMat);
-      this.coreMesh.position.y = 3.2;
+      // 3. Royal Strawberry Queen Teddy Boss: Giant pink plush queen bear with golden crown & candy cannons
+      // Torso
+      const torsoGeo = new THREE.SphereGeometry(1.6, 18, 18);
+      torsoGeo.scale(1.0, 1.15, 0.95);
+      this.coreMesh = new THREE.Mesh(torsoGeo, plushPinkMat);
+      this.coreMesh.position.y = 2.4;
       this.group.add(this.coreMesh);
+      this.baseColorHex = 0xff85a2;
 
-      // Glowing central reactor eye
-      const eyeGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 16);
-      eyeGeo.rotateX(Math.PI / 2);
-      const eye = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({ color: 0xff0055 }));
-      eye.position.set(0, 3.2, -0.92);
-      this.group.add(eye);
+      // Cream chest & heart medallion
+      const chestCream = new THREE.Mesh(new THREE.SphereGeometry(1.0, 14, 14), teddyCreamMat);
+      chestCream.scale.set(0.9, 1.0, 0.25);
+      chestCream.position.set(0, 2.3, -1.35);
+      this.group.add(chestCream);
 
-      // Shoulder Missile/Plasma Pods
-      const podGeo = new THREE.BoxGeometry(0.8, 0.8, 2.2);
-      const pod1 = new THREE.Mesh(podGeo, metalMat);
-      pod1.position.set(1.6, 4.0, 0);
-      const pod2 = pod1.clone();
-      pod2.position.x = -1.6;
-      this.group.add(pod1);
-      this.group.add(pod2);
+      // Giant Head
+      const headGeo = new THREE.SphereGeometry(1.2, 16, 16);
+      const head = new THREE.Mesh(headGeo, plushPinkMat);
+      head.position.set(0, 4.0, 0);
+      this.group.add(head);
 
-      // Heavy Legs
-      const legGeo = new THREE.BoxGeometry(0.7, 2.4, 0.9);
-      const leg1 = new THREE.Mesh(legGeo, metalMat);
-      leg1.position.set(0.9, 1.2, 0);
+      // Round bear ears with cream centers
+      [-1, 1].forEach(side => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), plushPinkMat);
+        ear.position.set(side * 0.95, 4.85, 0);
+        this.group.add(ear);
+
+        const inner = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), teddyCreamMat);
+        inner.position.set(side * 0.95, 4.85, -0.22);
+        this.group.add(inner);
+      });
+
+      // Snout & Nose
+      const snout = new THREE.Mesh(new THREE.SphereGeometry(0.38, 12, 12), teddyCreamMat);
+      snout.scale.set(1.2, 0.85, 0.8);
+      snout.position.set(0, 3.8, -1.05);
+      this.group.add(snout);
+
+      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), darkEyeMat);
+      nose.position.set(0, 3.9, -1.35);
+      this.group.add(nose);
+
+      // Eyes
+      [-1, 1].forEach(side => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), darkEyeMat);
+        eye.position.set(side * 0.45, 4.2, -1.05);
+        this.group.add(eye);
+      });
+
+      // Golden Queen Crown with rubies
+      const crown = new THREE.Group();
+      const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.42, 0.25, 16), crownMat);
+      crown.add(crownBase);
+      for (let i = 0; i < 5; i++) {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.35, 6), crownMat);
+        const ang = (i / 5) * Math.PI * 2;
+        spike.position.set(Math.cos(ang) * 0.44, 0.26, Math.sin(ang) * 0.44);
+        crown.add(spike);
+      }
+      crown.position.set(0, 5.25, 0);
+      this.group.add(crown);
+
+      // Giant Royal Bow Tie
+      const queenBow = this.createRibbonBow(2.0, 0xff2e63);
+      queenBow.position.set(0, 3.2, -1.3);
+      this.group.add(queenBow);
+
+      // Twin Strawberry Candy Launchers on shoulders
+      [-1, 1].forEach(side => {
+        const pod = new THREE.Group();
+        const podBody = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.38, 1.8, 14), teddyCreamMat);
+        podBody.rotation.x = Math.PI / 2;
+        pod.add(podBody);
+
+        const podCrown = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.06, 8, 16), new THREE.MeshBasicMaterial({ color: 0xff69b4 }));
+        podCrown.position.z = -0.9;
+        pod.add(podCrown);
+
+        pod.position.set(side * 1.6, 4.0, 0);
+        this.group.add(pod);
+      });
+
+      // Heavy Plush Legs
+      const legGeo = new THREE.CylinderGeometry(0.48, 0.55, 1.8, 14);
+      const leg1 = new THREE.Mesh(legGeo, plushPinkMat);
+      leg1.position.set(0.85, 0.9, 0);
       const leg2 = leg1.clone();
-      leg2.position.x = -0.9;
+      leg2.position.x = -0.85;
       this.group.add(leg1);
       this.group.add(leg2);
     }
   }
 
   createHealthBar() {
-    // 3D Billboard Canvas Health Bar
+    // 3D Billboard Canvas Cute Pastel Pill Health Bar
     const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 16;
+    canvas.width = 160;
+    canvas.height = 32;
     this.hbCtx = canvas.getContext('2d');
     this.hbTexture = new THREE.CanvasTexture(canvas);
 
@@ -178,9 +412,9 @@ export class Enemy {
     });
 
     this.hbSprite = new THREE.Sprite(hbMat);
-    const spriteScale = this.typeDef.isBoss ? 3.6 : 1.8;
-    this.hbSprite.scale.set(spriteScale, spriteScale * 0.16, 1);
-    this.hbSprite.position.y = this.height + (this.typeDef.isBoss ? 1.0 : 0.5);
+    const spriteScale = this.typeDef.isBoss ? 4.2 : 2.0;
+    this.hbSprite.scale.set(spriteScale, spriteScale * 0.2, 1);
+    this.hbSprite.position.y = this.height + (this.typeDef.isBoss ? 1.4 : 0.6);
     this.group.add(this.hbSprite);
 
     this.updateHealthBarTexture();
@@ -188,21 +422,47 @@ export class Enemy {
 
   updateHealthBarTexture() {
     const ctx = this.hbCtx;
-    ctx.clearRect(0, 0, 128, 16);
+    ctx.clearRect(0, 0, 160, 32);
 
-    // Background track
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, 128, 16);
+    // Pill background
+    ctx.fillStyle = 'rgba(255, 240, 245, 0.9)';
+    ctx.beginPath();
+    ctx.roundRect(4, 6, 152, 20, 10);
+    ctx.fill();
 
-    // Health Fill
+    // Heart icon
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = '#ff2e63';
+    ctx.fillText('💖', 8, 21);
+
+    // Health Track & Fill
+    const barX = 30;
+    const barW = 120;
+    const barH = 12;
+    const barY = 10;
+
+    ctx.fillStyle = '#ffd1dc';
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW, barH, 6);
+    ctx.fill();
+
     const pct = Math.max(0, this.hp / this.maxHp);
-    ctx.fillStyle = this.typeDef.isBoss ? '#ff0055' : '#00f3ff';
-    ctx.fillRect(2, 2, (128 - 4) * pct, 12 - 4);
+    if (pct > 0) {
+      const grad = ctx.createLinearGradient(barX, 0, barX + barW * pct, 0);
+      grad.addColorStop(0, '#ff7597');
+      grad.addColorStop(1, '#ff2e63');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW * pct, barH, 6);
+      ctx.fill();
+    }
 
     // Border
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0, 0, 128, 16);
+    ctx.strokeStyle = '#ff85a2';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(4, 6, 152, 20, 10);
+    ctx.stroke();
 
     this.hbTexture.needsUpdate = true;
   }
@@ -231,11 +491,11 @@ export class Enemy {
     if (this.flinchTimer > 0) {
       this.flinchTimer -= dt;
       if (this.coreMesh) {
-        this.coreMesh.material.color.setHex(0xff3355);
+        this.coreMesh.material.color.setHex(0xff3366);
       }
     } else {
       if (this.coreMesh) {
-        this.coreMesh.material.color.setHex(0x1a2130);
+        this.coreMesh.material.color.setHex(this.baseColorHex || 0xffffff);
       }
     }
 
@@ -247,11 +507,18 @@ export class Enemy {
     const distToPlayer = this.group.position.distanceTo(playerPos);
     const dirToPlayer = playerPos.clone().sub(this.group.position).normalize();
 
-    // 1. Drone AI Logic
+    // 1. Angel Kitty Drone AI Logic
     if (this.typeKey === 'DRONE') {
       if (this.gyroRing) {
-        this.gyroRing.rotation.x += dt * 4;
-        this.gyroRing.rotation.y += dt * 3;
+        this.gyroRing.rotation.z += dt * 2.5;
+      }
+
+      // Flapping angel wings
+      if (this.wings) {
+        const flap = Math.sin(Date.now() * 0.015) * 0.4;
+        this.wings.forEach(({ group, side }) => {
+          group.rotation.y = side * flap;
+        });
       }
 
       // Hover bobbing
@@ -273,20 +540,25 @@ export class Enemy {
       this.attackTimer += dt;
       if (this.attackTimer >= this.typeDef.attackCooldown && distToPlayer <= this.typeDef.attackRange) {
         this.attackTimer = 0;
-        // Shoot energy projectile
+        // Shoot sweet mischievous candy orb
         const muzzlePos = this.getCenter().add(dirToPlayer.clone().multiplyScalar(1.0));
         projectileManager.spawnEnemyProjectile(muzzlePos, dirToPlayer, 28, this.typeDef.damage);
       }
 
     } else if (this.typeKey === 'STALKER') {
-      // 2. Stalker AI Logic: Rapid ground charge
+      // 2. Wind-up Teddy Stalker AI Logic: Rapid ground charge & wind-up key spin
       this.group.position.y = 0;
 
-      // Animate leg cycle
-      const legCycle = Math.sin(Date.now() * 0.02) * 0.35;
+      // Animate golden wind-up key spinning
+      if (this.windUpKey) {
+        this.windUpKey.rotation.z += dt * 6.5;
+      }
+
+      // Animate waddling hug arm/leg cycle
+      const legCycle = Math.sin(Date.now() * 0.02) * 0.4;
       if (this.legs) {
-        this.legs.forEach((leg, i) => {
-          leg.rotation.x = (i % 2 === 0 ? 1 : -1) * legCycle;
+        this.legs.forEach((limb, i) => {
+          limb.rotation.x = (i % 2 === 0 ? 1 : -1) * legCycle;
         });
       }
 
@@ -315,11 +587,14 @@ export class Enemy {
       if (this.attackTimer >= this.typeDef.attackCooldown) {
         this.attackTimer = 0;
         // Fire from left & right pods
-        const leftMuzzle = this.group.position.clone().add(new THREE.Vector3(1.6, 4.0, 0));
-        const rightMuzzle = this.group.position.clone().add(new THREE.Vector3(-1.6, 4.0, 0));
+        const leftMuzzle = new THREE.Vector3(1.6, 4.0, 0);
+        this.group.localToWorld(leftMuzzle);
+        const rightMuzzle = new THREE.Vector3(-1.6, 4.0, 0);
+        this.group.localToWorld(rightMuzzle);
 
         projectileManager.spawnEnemyProjectile(leftMuzzle, dirToPlayer, 30, this.typeDef.damage);
         setTimeout(() => {
+          if (this.isDead || !this.group.parent) return;
           projectileManager.spawnEnemyProjectile(rightMuzzle, dirToPlayer, 30, this.typeDef.damage);
         }, 150);
       }

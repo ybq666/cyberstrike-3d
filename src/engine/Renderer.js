@@ -4,10 +4,10 @@ export class EngineRenderer {
   constructor(container) {
     this.container = container;
 
-    // 1. Scene
+    // 1. Scene - Sweet Dreamy Pastel Cotton Candy Atmosphere
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x050914);
-    this.scene.fog = new THREE.FogExp2(0x050914, 0.015);
+    this.scene.background = new THREE.Color(0xffeef6);
+    this.scene.fog = new THREE.FogExp2(0xffe4f0, 0.009);
 
     // 2. Camera
     this.camera = new THREE.PerspectiveCamera(
@@ -29,7 +29,7 @@ export class EngineRenderer {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.1;
 
     this.container.appendChild(this.renderer.domElement);
 
@@ -44,18 +44,18 @@ export class EngineRenderer {
   }
 
   setupLights() {
-    // Ambient light - subtle deep cyan
-    const ambient = new THREE.AmbientLight(0x0a1e3f, 1.2);
+    // Ambient light - warm strawberry cream glow
+    const ambient = new THREE.AmbientLight(0xffe2ee, 1.3);
     this.scene.add(ambient);
 
-    // Hemisphere light - subtle neon blue/purple fill
-    const hemiLight = new THREE.HemisphereLight(0x00f3ff, 0x1a0933, 0.6);
+    // Hemisphere light - sky pink / ground warm custard cream
+    const hemiLight = new THREE.HemisphereLight(0xffb8d6, 0xfff3e5, 0.85);
     hemiLight.position.set(0, 50, 0);
     this.scene.add(hemiLight);
 
-    // Main Directional Light (Moon / Cyber Satellite)
-    const dirLight = new THREE.DirectionalLight(0x88ccff, 1.8);
-    dirLight.position.set(35, 60, 25);
+    // Main Directional Light (Warm Sweet Sun)
+    const dirLight = new THREE.DirectionalLight(0xfffaea, 1.75);
+    dirLight.position.set(35, 65, 25);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
@@ -69,55 +69,108 @@ export class EngineRenderer {
     dirLight.shadow.bias = -0.0005;
     this.scene.add(dirLight);
 
-    // Central Core Pillar Light
-    const coreLight = new THREE.PointLight(0x00f3ff, 3.5, 45, 1.2);
+    // Central Sweets Pillar Warm Strawberry Light
+    const coreLight = new THREE.PointLight(0xff69b4, 3.2, 50, 1.2);
     coreLight.position.set(0, 8, 0);
     this.scene.add(coreLight);
   }
 
   setupEnvironment() {
-    // Cyber Sky Dome with starry points
-    const starCount = 800;
+    // 1. Dreamy Pastel Sky Dust & Twinkling Stars
+    const starCount = 650;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
+    const starColors = new Float32Array(starCount * 3);
 
-    for (let i = 0; i < starCount * 3; i += 3) {
+    const palette = [
+      new THREE.Color(0xff85b3), // strawberry pink
+      new THREE.Color(0xffd1dc), // baby pink
+      new THREE.Color(0xfff0aa), // butter yellow
+      new THREE.Color(0xb5e2fa), // sky soda
+      new THREE.Color(0xd8bbff)  // lavender
+    ];
+
+    for (let i = 0; i < starCount; i++) {
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
-      const r = 220 + Math.random() * 50;
+      const r = 200 + Math.random() * 50;
 
-      starPositions[i] = r * Math.sin(phi) * Math.cos(theta);
-      starPositions[i + 1] = Math.abs(r * Math.cos(phi)) + 10; // keep above horizon
-      starPositions[i + 2] = r * Math.sin(phi) * Math.sin(theta);
+      starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      starPositions[i * 3 + 1] = Math.abs(r * Math.cos(phi)) + 12;
+      starPositions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+      const color = palette[Math.floor(Math.random() * palette.length)];
+      starColors[i * 3] = color.r;
+      starColors[i * 3 + 1] = color.g;
+      starColors[i * 3 + 2] = color.b;
     }
 
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
     const starMat = new THREE.PointsMaterial({
-      color: 0x00f3ff,
-      size: 1.6,
+      size: 2.2,
+      vertexColors: true,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.85
     });
     const stars = new THREE.Points(starGeo, starMat);
     this.scene.add(stars);
 
-    // Distant Neon Grid Rings in Sky
-    const ringGeo = new THREE.TorusGeometry(120, 0.4, 8, 64);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0x00f3ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.25
+    // 2. Floating Sweet Pastel Rainbow Arches in Sky
+    const rainbowColors = [0xff70a6, 0xff9770, 0xffd670, 0xe9ff70, 0x70d6ff];
+    rainbowColors.forEach((colorHex, idx) => {
+      const archRadius = 135 - idx * 2.5;
+      const archGeo = new THREE.TorusGeometry(archRadius, 0.45, 8, 48, Math.PI);
+      const archMat = new THREE.MeshBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: 0.55
+      });
+      const arch = new THREE.Mesh(archGeo, archMat);
+      arch.rotation.x = Math.PI * 0.12;
+      arch.rotation.y = Math.PI * 0.25;
+      arch.position.set(0, 10 + idx * 0.8, -30);
+      this.scene.add(arch);
     });
-    const ring1 = new THREE.Mesh(ringGeo, ringMat);
-    ring1.rotation.x = Math.PI / 2.3;
-    ring1.position.set(0, 40, 0);
-    this.scene.add(ring1);
 
-    const ring2 = ring1.clone();
-    ring2.scale.set(0.75, 0.75, 0.75);
-    ring2.rotation.y = 0.5;
-    this.scene.add(ring2);
+    // 3. Fluffy Candy Clouds
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.9,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.85
+    });
+
+    const cloudConfigs = [
+      { x: -70, y: 38, z: -80, scale: 1.4 },
+      { x: 80, y: 42, z: -60, scale: 1.2 },
+      { x: -50, y: 36, z: 80, scale: 1.5 },
+      { x: 75, y: 40, z: 75, scale: 1.3 }
+    ];
+
+    cloudConfigs.forEach(cfg => {
+      const cloudGroup = new THREE.Group();
+      const puffOffsets = [
+        [0, 0, 0, 4.2],
+        [-3.2, -0.6, 0, 3.2],
+        [3.4, -0.5, 0.2, 3.4],
+        [-1.6, 1.8, -0.2, 3.0],
+        [1.8, 1.6, 0.1, 3.1]
+      ];
+
+      puffOffsets.forEach(([px, py, pz, pr]) => {
+        const puffGeo = new THREE.SphereGeometry(pr, 10, 10);
+        const puff = new THREE.Mesh(puffGeo, cloudMat);
+        puff.position.set(px, py, pz);
+        cloudGroup.add(puff);
+      });
+
+      cloudGroup.position.set(cfg.x, cfg.y, cfg.z);
+      cloudGroup.scale.set(cfg.scale, cfg.scale * 0.7, cfg.scale);
+      this.scene.add(cloudGroup);
+    });
   }
 
   onResize() {

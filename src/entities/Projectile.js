@@ -5,33 +5,43 @@ export class ProjectileManager {
     this.scene = scene;
     this.projectiles = [];
 
-    // Shared Geometries & Materials
-    this.plasmaGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.6, 8);
-    this.plasmaGeo.rotateX(Math.PI / 2);
+    // 1. Cute Heart Shape Geometry for Strawberry SMG
+    const heartShape = new THREE.Shape();
+    heartShape.moveTo(0, 0.1);
+    heartShape.bezierCurveTo(0, 0.24, -0.22, 0.24, -0.22, 0.1);
+    heartShape.bezierCurveTo(-0.22, -0.05, 0, -0.15, 0, -0.25);
+    heartShape.bezierCurveTo(0, -0.15, 0.22, -0.05, 0.22, 0.1);
+    heartShape.bezierCurveTo(0.22, 0.24, 0, 0.24, 0, 0.1);
 
-    this.pelletGeo = new THREE.SphereGeometry(0.06, 6, 6);
-    this.enemyOrbGeo = new THREE.SphereGeometry(0.2, 12, 12);
+    const heartExtrude = { depth: 0.08, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.04, bevelThickness: 0.04 };
+    this.heartGeo = new THREE.ExtrudeGeometry(heartShape, heartExtrude);
+    this.heartGeo.center();
+    this.heartGeo.scale(1.2, 1.2, 1.2);
 
-    this.beamGeo = new THREE.CylinderGeometry(0.05, 0.05, 1, 8);
-    this.beamGeo.rotateX(Math.PI / 2);
+    // 2. Rainbow Candy Pellets (Shotgun)
+    this.pelletGeo = new THREE.DodecahedronGeometry(0.1);
+
+    // 3. Mischievous Purple Candy Orbs (Enemies)
+    this.enemyOrbGeo = new THREE.SphereGeometry(0.24, 12, 12);
   }
 
-  // 1. 发射玩家子弹 (等离子/霰弹)
+  // 1. 发射草莓心心子弹 / 彩虹糖果散弹
   spawnPlayerProjectile(origin, direction, speed, damage, colorHex, isPellet = false) {
-    const mat = new THREE.MeshBasicMaterial({
-      color: colorHex
+    const mat = new THREE.MeshStandardMaterial({
+      color: colorHex,
+      emissive: colorHex,
+      emissiveIntensity: 0.6,
+      roughness: 0.2,
+      metalness: 0.1
     });
 
-    const mesh = new THREE.Mesh(isPellet ? this.pelletGeo : this.plasmaGeo, mat);
+    const mesh = new THREE.Mesh(isPellet ? this.pelletGeo : this.heartGeo, mat);
     mesh.position.copy(origin);
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), direction.clone().normalize());
 
-    // Small light for plasma bolt
-    let light = null;
-    if (!isPellet) {
-      light = new THREE.PointLight(colorHex, 1.5, 6);
-      mesh.add(light);
-    }
+    // Sweet pastel light for flying hearts
+    const light = new THREE.PointLight(colorHex, isPellet ? 1.0 : 1.8, 6);
+    mesh.add(light);
 
     this.scene.add(mesh);
 
@@ -41,23 +51,23 @@ export class ProjectileManager {
       velocity: direction.clone().normalize().multiplyScalar(speed),
       damage,
       colorHex,
-      radius: isPellet ? 0.15 : 0.25,
+      radius: isPellet ? 0.2 : 0.35,
       life: 2.5
     });
   }
 
-  // 2. 磁轨炮即时激光束 (Hitscan Beam)
-  spawnRailgunBeam(startPos, endPos, colorHex = 0xff0077) {
+  // 2. 星愿爱心魔杖粉红星光即时射线 (Hitscan Beam)
+  spawnRailgunBeam(startPos, endPos, colorHex = 0xff1493) {
     const dist = startPos.distanceTo(endPos);
     const midPoint = startPos.clone().add(endPos).multiplyScalar(0.5);
 
-    const geo = new THREE.CylinderGeometry(0.06, 0.06, dist, 8);
+    const geo = new THREE.CylinderGeometry(0.08, 0.08, dist, 8);
     geo.rotateX(Math.PI / 2);
 
     const mat = new THREE.MeshBasicMaterial({
       color: colorHex,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.92,
       blending: THREE.AdditiveBlending
     });
 
@@ -67,13 +77,13 @@ export class ProjectileManager {
 
     this.scene.add(mesh);
 
-    // Inner bright core
+    // Inner sparkling gold/white magical star core
     const coreMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      color: 0xfff0aa,
       transparent: true,
       opacity: 1.0
     });
-    const coreGeo = new THREE.CylinderGeometry(0.02, 0.02, dist, 6);
+    const coreGeo = new THREE.CylinderGeometry(0.03, 0.03, dist, 6);
     coreGeo.rotateX(Math.PI / 2);
     const coreMesh = new THREE.Mesh(coreGeo, coreMat);
     mesh.add(coreMesh);
@@ -84,21 +94,24 @@ export class ProjectileManager {
       coreMesh,
       mat,
       coreMat,
-      life: 0.25,
-      maxLife: 0.25
+      life: 0.28,
+      maxLife: 0.28
     });
   }
 
-  // 3. 敌人发射敌对等离子球 (Enemy Plasma Orb)
+  // 3. 敌人发射淘气紫色糖果波 (Enemy Candy Orb)
   spawnEnemyProjectile(origin, direction, speed = 26, damage = 18) {
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0xff2244
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x9d4edd,
+      emissive: 0x7b2cbf,
+      emissiveIntensity: 0.7,
+      roughness: 0.3
     });
 
     const mesh = new THREE.Mesh(this.enemyOrbGeo, mat);
     mesh.position.copy(origin);
 
-    const light = new THREE.PointLight(0xff2244, 2.0, 8);
+    const light = new THREE.PointLight(0xb5179e, 2.0, 8);
     mesh.add(light);
 
     this.scene.add(mesh);
@@ -108,14 +121,14 @@ export class ProjectileManager {
       mesh,
       velocity: direction.clone().normalize().multiplyScalar(speed),
       damage,
-      colorHex: 0xff2244,
-      radius: 0.35,
+      colorHex: 0x9d4edd,
+      radius: 0.38,
       life: 4.0
     });
   }
 
   // 更新所有子弹飞行与碰撞
-  update(dt, arena, enemies, player, particleSystem, floatingText, soundEngine, onPlayerDamaged) {
+  update(dt, arena, enemies, player, particleSystem, floatingText, soundEngine, onPlayerDamaged, remotePlayers = [], onRemotePlayerHit = null) {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
 
@@ -166,30 +179,59 @@ export class ProjectileManager {
         continue;
       }
 
-      // 1. Player projectile hitting enemies
+      // 1. Player projectile hitting enemies or remote players
       if (!p.isEnemy) {
-        let hitEnemy = false;
-        for (const enemy of enemies) {
-          if (enemy.isDead) continue;
+        let hitTarget = false;
 
-          const dist = nextPos.distanceTo(enemy.getCenter());
-          if (dist < enemy.radius + p.radius) {
-            // Check Headshot/Weakpoint (if hit height is in top 30% of enemy model)
-            const relativeY = nextPos.y - enemy.position.y;
-            const isCrit = relativeY > enemy.height * 0.7;
-            const finalDamage = isCrit ? p.damage * 2.0 : p.damage;
+        // Check remote players (PvP)
+        if (remotePlayers && remotePlayers.length > 0) {
+          for (const rPlayer of remotePlayers) {
+            if (rPlayer.isDead || rPlayer.isInvulnerable) continue;
 
-            enemy.takeDamage(finalDamage);
-            particleSystem.createSparks(nextPos, p.velocity.clone().negate().normalize(), 0xff3355, 12);
-            floatingText.showDamage(nextPos, finalDamage, isCrit);
-            soundEngine.playHitmarker(isCrit);
+            const dist = nextPos.distanceTo(rPlayer.getCenter());
+            if (dist < rPlayer.radius + p.radius) {
+              const isCrit = (nextPos.y - rPlayer.position.y) > 1.35;
+              const finalDamage = isCrit ? p.damage * 2.0 : p.damage;
 
-            hitEnemy = true;
-            break;
+              rPlayer.takeDamage(finalDamage);
+              particleSystem.createSparks(nextPos, p.velocity.clone().negate().normalize(), 0xff3355, 14);
+              floatingText.showDamage(nextPos, finalDamage, isCrit);
+              soundEngine.playHitmarker(isCrit);
+
+              if (onRemotePlayerHit) {
+                onRemotePlayerHit(rPlayer, finalDamage, isCrit, nextPos);
+              }
+
+              hitTarget = true;
+              break;
+            }
           }
         }
 
-        if (hitEnemy) {
+        // Check AI enemies (PvE / Solo)
+        if (!hitTarget && enemies && enemies.length > 0) {
+          for (const enemy of enemies) {
+            if (enemy.isDead) continue;
+
+            const dist = nextPos.distanceTo(enemy.getCenter());
+            if (dist < enemy.radius + p.radius) {
+              // Check Headshot/Weakpoint
+              const relativeY = nextPos.y - enemy.position.y;
+              const isCrit = relativeY > enemy.height * 0.7;
+              const finalDamage = isCrit ? p.damage * 2.0 : p.damage;
+
+              enemy.takeDamage(finalDamage);
+              particleSystem.createSparks(nextPos, p.velocity.clone().negate().normalize(), 0xff3355, 12);
+              floatingText.showDamage(nextPos, finalDamage, isCrit);
+              soundEngine.playHitmarker(isCrit);
+
+              hitTarget = true;
+              break;
+            }
+          }
+        }
+
+        if (hitTarget) {
           this.destroyProjectile(i);
           continue;
         }

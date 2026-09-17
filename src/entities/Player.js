@@ -112,9 +112,9 @@ export class Player {
     this.buffTimer = 0;
   }
 
-  update(dt, input, currentWeaponAdsFov, isADS) {
+  update(dt, input, currentWeaponAdsFov, isADS, mouseDelta = null) {
     // 1. Mouse Look (Pitch & Yaw)
-    const { dx, dy } = input.getAndResetDeltas();
+    const { dx, dy } = mouseDelta || input.getAndResetDeltas();
     const lookSens = 0.0022;
     const ySign = this.invertY ? -1 : 1;
 

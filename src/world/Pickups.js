@@ -3,30 +3,30 @@ import * as THREE from 'three';
 export const PICKUP_TYPES = {
   HEALTH: {
     id: 'health',
-    name: '纳米医疗包',
-    color: 0x00ff66,
-    icon: '+',
+    name: '🍓 草莓奶油甜甜圈',
+    color: 0xff69b4,
+    icon: '🍓',
     value: 35
   },
   SHIELD: {
     id: 'shield',
-    name: '护盾增幅器',
-    color: 0x00f3ff,
-    icon: '⛨',
+    name: '🎀 萌心蝴蝶结护盾',
+    color: 0xff3366,
+    icon: '🎀',
     value: 50
   },
   AMMO: {
     id: 'ammo',
-    name: '等离子弹药箱',
+    name: '🍭 彩虹波板棒棒糖',
     color: 0xffaa00,
-    icon: '⚡',
+    icon: '🍭',
     value: 100
   },
   OVERDRIVE: {
     id: 'overdrive',
-    name: '过载芯片',
-    color: 0xff0055,
-    icon: '★',
+    name: '✨ 闪耀梦幻星愿星',
+    color: 0xffd700,
+    icon: '✨',
     duration: 10
   }
 };
@@ -37,9 +37,11 @@ export class PickupManager {
     this.pickups = [];
 
     // Shared geometries
-    this.cubeGeo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
-    this.octaGeo = new THREE.OctahedronGeometry(0.55);
-    this.dodecaGeo = new THREE.DodecahedronGeometry(0.5);
+    this.donutGeo = new THREE.TorusGeometry(0.35, 0.18, 12, 24);
+    this.octaGeo = new THREE.OctahedronGeometry(0.48);
+    this.lollipopGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.12, 24);
+    this.lollipopGeo.rotateX(Math.PI / 2);
+    this.starGeo = new THREE.DodecahedronGeometry(0.45);
   }
 
   spawn(typeKey, position) {
@@ -48,35 +50,71 @@ export class PickupManager {
     group.position.copy(position);
     group.position.y = Math.max(1.0, position.y);
 
-    let geo = this.cubeGeo;
-    if (typeKey === 'SHIELD') geo = this.octaGeo;
-    if (typeKey === 'OVERDRIVE') geo = this.dodecaGeo;
+    let mesh;
+    if (typeKey === 'HEALTH') {
+      // Strawberry frosted donut
+      const donutMat = new THREE.MeshStandardMaterial({
+        color: 0xff69b4,
+        roughness: 0.3,
+        metalness: 0.1
+      });
+      mesh = new THREE.Mesh(this.donutGeo, donutMat);
+      mesh.rotation.x = Math.PI / 3;
+    } else if (typeKey === 'SHIELD') {
+      // Cute Ribbon Bow
+      const bowMat = new THREE.MeshStandardMaterial({
+        color: 0xff2e63,
+        roughness: 0.35,
+        metalness: 0.1
+      });
+      mesh = new THREE.Group();
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), bowMat);
+      mesh.add(knot);
+      [-1, 1].forEach(s => {
+        const loop = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.42, 10), bowMat);
+        loop.rotation.z = s * (Math.PI / 2 + 0.1);
+        loop.scale.set(1, 0.45, 0.85);
+        loop.position.set(s * 0.22, 0, 0);
+        mesh.add(loop);
+      });
+    } else if (typeKey === 'AMMO') {
+      // Rainbow Lollipop
+      const lollyGroup = new THREE.Group();
+      const lollyMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, roughness: 0.3 });
+      const candy = new THREE.Mesh(this.lollipopGeo, lollyMat);
+      lollyGroup.add(candy);
+      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.6, 8), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+      stick.position.y = -0.35;
+      lollyGroup.add(stick);
+      mesh = lollyGroup;
+    } else {
+      // Golden Star Gem (Overdrive)
+      const starMat = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: 0xffae00,
+        emissiveIntensity: 0.7,
+        roughness: 0.2,
+        metalness: 0.4
+      });
+      mesh = new THREE.Mesh(this.starGeo, starMat);
+    }
 
-    const mat = new THREE.MeshStandardMaterial({
-      color: typeDef.color,
-      emissive: typeDef.color,
-      emissiveIntensity: 0.6,
-      roughness: 0.3,
-      metalness: 0.8
-    });
-
-    const mesh = new THREE.Mesh(geo, mat);
     group.add(mesh);
 
-    // Glowing outer ring
-    const ringGeo = new THREE.RingGeometry(0.7, 0.85, 24);
+    // Glowing pastel lace ring beneath pickup
+    const ringGeo = new THREE.RingGeometry(0.65, 0.85, 24);
     const ringMat = new THREE.MeshBasicMaterial({
       color: typeDef.color,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.7
+      opacity: 0.75
     });
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = Math.PI / 2;
     group.add(ring);
 
-    // Point Light
-    const light = new THREE.PointLight(typeDef.color, 1.2, 5);
+    // Sweet point light
+    const light = new THREE.PointLight(typeDef.color, 1.6, 6);
     group.add(light);
 
     this.scene.add(group);
@@ -88,9 +126,9 @@ export class PickupManager {
       mesh,
       ring,
       baseY: group.position.y,
-      rotSpeed: 1.8,
+      rotSpeed: 2.0,
       age: 0,
-      life: 30 // Despawn after 30s if not picked up
+      life: 30
     };
 
     this.pickups.push(item);

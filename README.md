@@ -1,35 +1,39 @@
-# 《赛博前线 3D》（Cyberstrike 3D）
+# 《🎀 甜心喵喵 3D · 萌偶大作战 🎀》（KITTY STRIKE 3D 多人联机对战版）
 
-一款基于 WebGL 与 Three.js 开发的高品质未来赛博朋克风第一人称 3D 射击游戏（FPS）。具备纯原生 Web Audio API 程序化合成音效、3D武器模型、后坐力动画、浮动伤害数字、战术雷达以及电脑/手机双端触控支持。
+一款基于 WebGL 与 Three.js 开发的超甜美少女萌系 3D 第一人称射击/对战游戏（FPS）。全方位采用 Hello Kitty 玩偶、草莓奶霜色调、蝴蝶结、甜品城堡与软萌音效设计。全面支持 **多人在线 PvP 萌偶茶话会派对** 与 **单人 AI 波次玩偶挑战**。具备 WebRTC P2P 毫秒级直连同步、八音盒与 Q 弹可爱程序化合成音效、高精萌宠武器模型、实时战绩排行榜（Tab）以及电脑/手机双端触控支持。
 
-![Cyberstrike 3D](https://img.shields.io/badge/Three.js-r170-00f3ff?style=for-the-badge&logo=three.js)
+![Three.js](https://img.shields.io/badge/Three.js-r170-ff69b4?style=for-the-badge&logo=three.js)
+![WebRTC](https://img.shields.io/badge/WebRTC-P2P_Mesh-ff99c8?style=for-the-badge&logo=webrtc)
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?style=for-the-badge&logo=vite)
-![WebGL](https://img.shields.io/badge/WebGL-2.0-990000?style=for-the-badge&logo=webgl)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+![Theme](https://img.shields.io/badge/Theme-Kawaii_Kitty-ff3366?style=for-the-badge)
 
 ---
 
-## 🎮 游戏特性
+## 🎀 少女萌系特色改造亮点
 
-- **现代赛博朋克竞技场**：
-  - 动态光照、点光源阴影、发光霓虹地网、战术掩体与跳跃垫（Jump Pads）。
-- **3D 枪械系统（第一人称视角）**：
-  - **1号武器：等离子冲锋枪 (Plasma Blaster)** - 高射速电浆弹，容量大，适合中近距离压制。
-  - **2号武器：碎裂重型霰弹枪 (Scatter Cannon)** - 8 发高热霰弹，强冲击力，贴脸爆发极高。
-  - **3号武器：湮灭磁轨炮 (Vortex Railgun)** - 穿透即时激光（Hitscan），右键开启 2.5X 高倍电子瞄准镜。
-  - 逼真的枪口火焰、开火后坐力抬升、武器晃动（Weapon Sway）及走动呼吸摆动。
-- **智能敌人与多波次防御**：
-  - **巡航无人机 (Cyber Drone)**：空中机动盘旋，发射等离子光球。
-  - **机械潜伏者 (Stalker)**：高速突进地面猎手，近战撕咬。
-  - **泰坦重装机甲 (Titan Mech)**：第 4 波 Boss 登场，高血量、双肩电浆飞弹发射槽。
-- **视觉打击感与音效反馈**：
-  - 命中浮动战斗伤害数字（头部弱点黄色暴击提示 `暴击! -90`）。
-  - 白色/黄色击中十字标记（Hitmarker）。
-  - 敌人死亡触发霓虹发光碎片大爆炸与冲击波光环。
-  - 原生 Web Audio API 全程序化合成音效（开火、轰鸣、磁轨炮穿透、护盾碎裂、拾取、波次警报，零外部音频文件加载延迟）。
-- **双端支持**：
-  - **PC 端**：鼠标锁定第一人称操作，WASD 移动，Shift 冲刺，Space 弹跳。
-  - **移动端**：自动适配虚拟摇杆、划屏视角、专用开火/瞄准/跳跃/换弹/切枪触控按键。
+- **梦幻草莓奶霜竞技场 (Sweet Arena)**：
+  - 草莓奶霜渐变天空、粉彩浮空星尘、梦幻彩虹拱门与蓬松白云朵。
+  - 粉白马卡龙棋盘格地面与中央巨型 Hello Kitty 蝴蝶结花边地毯。
+  - 边缘威化饼干奶油拉花墙面、绑有粉红缎带立体蝴蝶结的糖果礼物盒掩体。
+  - 中央草莓甜点城堡塔，顶端跳动发光粉红爱心水晶与旋转缎带。
+  - 弹性 Q 弹的“草莓果冻布丁弹跳垫”（Boing 卡通弹跳跳跃）。
+
+- **超萌 3D 专属玩具枪械模型**：
+  - **1号玩具：🍓 草莓喵喵枪 (Strawberry Kitty Blaster)** - 猫耳造型白粉机身，左耳标志性经典红色 Hello Kitty 蝴蝶结，双出水喷嘴喷射爱心草莓果汁弹。
+  - **2号玩具：🍬 彩虹波波糖果枪 (Rainbow Candy Popper)** - 马卡龙薄荷绿握把，糖果螺旋纹双枪管，透明糖果球弹仓，8 发糖果球散射爆发。
+  - **3号玩具：✨ 星愿爱心魔杖炮 (Star Wish Magic Wand)** - 珍珠白魔杖身，螺旋金环与发光爱心水晶杖顶，右键高倍少女心魔法镜贯穿长程星光。
+
+- **三款调皮可爱的毛绒玩偶伙伴（敌人实体）**：
+  - **飞天天使猫咪玩偶 (Angel Kitty)**：白色毛绒猫头、扑棱小翅膀与发光光环，发射调皮糖果球。
+  - **捣蛋发条泰迪熊 (Clockwork Teddy)**：焦糖色泰迪熊、奶油肚皮与红色小领结，背后旋转发条金钥匙，摇摆奔跑。
+  - **草莓女王巨型甜心熊 Boss (Queen Teddy Boss)**：巨大粉红泰迪熊，头戴璀璨宝石金皇冠，双肩糖果飞弹连发。
+
+- **萌系程序化合成音效与背景音乐**：
+  - Web Audio 纯代码合成可爱音效：草莓枪 Q 弹 Pew-Pew 声、糖果礼炮彩带波普声、星愿魔杖仙女竖琴滑音、清脆风铃 Hitmarker、波板糖八音盒拾取琶音、以及内置温暖治愈的八音盒萌系 BGM！
+
+- **粉彩可爱 HUD 与对战大厅**：
+  - 圆润胶囊状毛玻璃粉红界面、圆角 Fredoka / Quicksand 字体、爱心准星与草莓鲜奶油生命槽。
+  - 支持 6 位房间码极速开黑、WebRTC P2P 0 服务器消耗联机对战。
 
 ---
 
@@ -39,47 +43,35 @@
 | 按键 / 操作 | 动作 |
 | :--- | :--- |
 | **点击画面** | 锁定鼠标视角 (Pointer Lock) |
-| **W / A / S / D** | 前后左右移动走位 |
-| **Shift** | 战术冲刺 (消耗耐力) |
-| **Space** | 弹跳 / 踩踏重力跳跃垫超高升空 |
+| **W / A / S / D** | 小碎步前后左右走位 |
+| **Shift** | 活力奔跑 (消耗耐力) |
+| **Space** | 跳跃 / 踩踏草莓果冻蹦床超高升空 |
 | **鼠标移动** | 旋转与瞄准视角 |
-| **鼠标左键** | 开火射击 |
-| **鼠标右键** | 精确瞄准 (机瞄 / 磁轨炮高倍镜) |
-| **R** | 手动装填弹药 |
-| **1 / 2 / 3 或 滚轮** | 切换武器 (冲锋枪 / 霰弹枪 / 磁轨炮) |
-| **Esc** | 暂停游戏 / 设置 (灵敏度、音量、反转Y轴) |
+| **鼠标左键** | 发射爱心果汁 / 糖果球 |
+| **鼠标右键** | 星愿魔杖高倍魔法镜瞄准 |
+| **R** | 手动填装糖果弹药 |
+| **1 / 2 / 3 或 滚轮** | 切换玩具 (草莓枪 / 糖果枪 / 魔杖炮) |
+| **Tab** | 战绩排行榜 |
+| **Esc** | 暂停 / 稍作茶歇 |
 
 ### 移动端触控
-- **左侧虚拟摇杆**：拖动控制移动走位与冲刺。
-- **右半屏幕手势**：滑动控制视角旋转与瞄准。
-- **右下角触控按键**：开火、机瞄、跳跃、换弹、切枪。
+- **左侧虚拟摇杆**：拖动控制走位奔跑。
+- **右半屏幕手势**：滑动控制视角旋转。
+- **右下角触控按键**：爱心开火、开镜、果冻蹦床、填装、换玩具。
 
 ---
 
 ## 📦 快速启动与本地运行
 
 ```bash
-# 1. 克隆代码仓库
-git clone https://github.com/ybq666/cyberstrike-3d.git
-cd cyberstrike-3d
-
-# 2. 安装依赖
+# 1. 安装依赖
 npm install
 
-# 3. 启动开发服务器
+# 2. 启动开发服务器
 npm run dev
 
-# 4. 构建生产版本
+# 3. 构建生产版本
 npm run build
 ```
 
-浏览器打开 `http://localhost:3000/` 即可进入战场。
-
----
-
-## 🛠️ 技术栈
-- **核心框架**：HTML5 + Vanilla JavaScript (ES Modules)
-- **3D 引擎**：[Three.js](https://threejs.org/)
-- **打包与构建**：[Vite](https://vitejs.dev/)
-- **音频技术**：Web Audio API
-- **界面设计**：赛博朋克玻璃拟态（Glassmorphism + Neon Glow）
+浏览器打开 `http://localhost:3000/` 即可进入草莓萌偶茶话会！

@@ -8,11 +8,7 @@ export class FloatingTextManager {
     this.vec = new THREE.Vector3();
   }
 
-  showDamage(worldPos, damage, isCrit = false) {
-    const el = document.createElement('div');
-    el.className = `floating-dmg ${isCrit ? 'crit' : ''}`;
-    el.textContent = isCrit ? `暴击! -${Math.round(damage)}` : `-${Math.round(damage)}`;
-
+  spawnItem(el, worldPos) {
     this.container.appendChild(el);
 
     const item = {
@@ -29,6 +25,25 @@ export class FloatingTextManager {
 
     this.items.push(item);
     this.updateItemPosition(item);
+  }
+
+  showDamage(worldPos, damage, isCrit = false) {
+    const el = document.createElement('div');
+    el.className = `floating-dmg ${isCrit ? 'crit' : ''}`;
+    if (damage < 0) {
+      el.className += ' heal';
+      el.textContent = `🍓 +${Math.abs(Math.round(damage))}`;
+    } else {
+      el.textContent = isCrit ? `✨ 暴击! -${Math.round(damage)} 💖` : `💕 -${Math.round(damage)}`;
+    }
+    this.spawnItem(el, worldPos);
+  }
+
+  showHeal(worldPos, amount) {
+    const el = document.createElement('div');
+    el.className = 'floating-dmg heal';
+    el.textContent = `🍓 +${Math.abs(Math.round(amount))}`;
+    this.spawnItem(el, worldPos);
   }
 
   updateItemPosition(item) {

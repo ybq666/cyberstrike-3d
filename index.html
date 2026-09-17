@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>赛博前线 3D - CYBERSTRIKE</title>
+  <title>🎀 甜心喵喵 3D · 萌偶大作战 (KITTY STRIKE 3D) 🎀</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./src/style.css">
 </head>
 <body>
@@ -17,24 +17,46 @@
   <div id="hud" class="hidden">
     <!-- 顶部状态栏 -->
     <div class="hud-top-bar">
-      <div class="hud-panel wave-panel">
-        <span class="hud-label">作战波次</span>
+      <!-- 单机模式状态 -->
+      <div class="hud-panel wave-panel solo-panel">
+        <span class="hud-label">茶话会波次</span>
         <span id="wave-display" class="hud-value neon-cyan">第 1 波</span>
       </div>
-      <div class="hud-panel score-panel">
-        <span class="hud-label">作战积分</span>
+      <div class="hud-panel score-panel solo-panel">
+        <span class="hud-label">甜度积分</span>
         <span id="score-display" class="hud-value neon-yellow">0</span>
       </div>
-      <div class="hud-panel enemies-panel">
-        <span class="hud-label">剩余威胁</span>
+      <div class="hud-panel enemies-panel solo-panel">
+        <span class="hud-label">活泼玩偶</span>
         <span id="enemies-display" class="hud-value neon-red">0</span>
       </div>
+
+      <!-- 多人模式状态 -->
+      <div id="mp-room-badge" class="hud-panel mp-panel hidden clickable" title="点击复制好友邀请链接">
+        <span class="hud-label">房间码 (点击复制)</span>
+        <span id="mp-room-code" class="hud-value neon-cyan">KITTY-XXXX</span>
+      </div>
+      <div class="hud-panel mp-panel hidden">
+        <span class="hud-label">送出爱心</span>
+        <span id="mp-kills-display" class="hud-value neon-green">0 次</span>
+      </div>
+      <div class="hud-panel mp-panel hidden">
+        <span class="hud-label">被萌倒</span>
+        <span id="mp-deaths-display" class="hud-value neon-red">0 次</span>
+      </div>
+      <div class="hud-panel mp-panel hidden">
+        <span class="hud-label">信号延迟</span>
+        <span id="mp-ping-display" class="hud-value neon-yellow">-- ms</span>
+      </div>
     </div>
+
+    <!-- 右上角击杀播报流 (Kill Feed) -->
+    <div id="kill-feed" class="kill-feed"></div>
 
     <!-- 右上角战术雷达 -->
     <div class="radar-container">
       <canvas id="radar-canvas" width="160" height="160"></canvas>
-      <div class="radar-label">战术雷达 50M</div>
+      <div class="radar-label">萌物雷达 50M</div>
     </div>
 
     <!-- 准星系统 -->
@@ -60,7 +82,7 @@
         <div class="scope-cross-v"></div>
         <div class="scope-ring"></div>
         <div class="scope-corners"></div>
-        <div class="scope-readout">ZOOM 2.5X // 锁定轨道</div>
+        <div class="scope-readout">🎀 星愿魔杖 · 少女心魔法镜 // 锁定萌心</div>
       </div>
     </div>
 
@@ -82,7 +104,7 @@
       <!-- 护盾槽 -->
       <div class="stat-bar-group">
         <div class="stat-header">
-          <span class="stat-name">能量护盾</span>
+          <span class="stat-name">萌心护盾</span>
           <span id="shield-text" class="stat-num">100 / 100</span>
         </div>
         <div class="bar-track">
@@ -93,7 +115,7 @@
       <!-- 生命槽 -->
       <div class="stat-bar-group">
         <div class="stat-header">
-          <span class="stat-name">机体装甲</span>
+          <span class="stat-name">活力体魄</span>
           <span id="health-text" class="stat-num">100 / 100</span>
         </div>
         <div class="bar-track">
@@ -108,8 +130,8 @@
 
       <!-- Buff 状态栏 -->
       <div id="buff-indicator" class="buff-indicator hidden">
-        <span class="buff-icon">⚡</span>
-        <span id="buff-text">过载超频 (双倍伤害)</span>
+        <span class="buff-icon">✨</span>
+        <span id="buff-text">草莓糖心超频 (双倍爱心)</span>
         <span id="buff-timer">10s</span>
       </div>
     </div>
@@ -119,11 +141,11 @@
       <!-- 换弹提示 -->
       <div id="reload-indicator" class="reload-indicator hidden">
         <div class="reload-spinner"></div>
-        <span>装填中...</span>
+        <span>🍓 糖果填装中...</span>
       </div>
 
       <div class="weapon-info-box">
-        <div class="weapon-name-display" id="weapon-name">等离子冲锋枪</div>
+        <div class="weapon-name-display" id="weapon-name">🍓 草莓喵喵枪</div>
         <div class="ammo-display">
           <span id="ammo-cur" class="ammo-cur">35</span>
           <span class="ammo-slash">/</span>
@@ -135,15 +157,15 @@
       <div class="weapon-slots">
         <div class="weapon-slot active" data-slot="1" id="slot-1">
           <span class="slot-key">1</span>
-          <span class="slot-name">冲锋枪</span>
+          <span class="slot-name">草莓枪</span>
         </div>
         <div class="weapon-slot" data-slot="2" id="slot-2">
           <span class="slot-key">2</span>
-          <span class="slot-name">霰弹枪</span>
+          <span class="slot-name">糖果枪</span>
         </div>
         <div class="weapon-slot" data-slot="3" id="slot-3">
           <span class="slot-key">3</span>
-          <span class="slot-name">磁轨炮</span>
+          <span class="slot-name">魔杖炮</span>
         </div>
       </div>
     </div>
@@ -157,76 +179,198 @@
       </div>
       <div id="touch-look-zone" class="touch-look-zone"></div>
       <div class="mobile-action-buttons">
-        <button id="touch-btn-fire" class="touch-btn touch-btn-fire">开火</button>
+        <button id="touch-btn-fire" class="touch-btn touch-btn-fire">爱心</button>
         <div class="mobile-sub-buttons">
-          <button id="touch-btn-ads" class="touch-btn">机瞄</button>
-          <button id="touch-btn-jump" class="touch-btn">跳跃</button>
-          <button id="touch-btn-reload" class="touch-btn">换弹</button>
-          <button id="touch-btn-switch" class="touch-btn">切枪</button>
+          <button id="touch-btn-ads" class="touch-btn">开镜</button>
+          <button id="touch-btn-jump" class="touch-btn">蹦床</button>
+          <button id="touch-btn-reload" class="touch-btn">填装</button>
+          <button id="touch-btn-switch" class="touch-btn">玩具</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PC 端鼠标锁定提示浮层 (未锁定状态下点击即可锁定鼠标进入视角) -->
+    <div id="click-to-lock-overlay" class="click-to-lock-overlay hidden">
+      <div class="ctl-card">
+        <div class="ctl-icon">🎯</div>
+        <div class="ctl-title">点击画面锁定鼠标 · 进入第一人称视角</div>
+        <div class="ctl-desc">移动鼠标环顾视角 · 鼠标左键发射爱心 · 鼠标右键开镜瞄准</div>
+        <div class="ctl-keys">
+          <span><b>W A S D</b> 走位</span>
+          <span><b>Shift</b> 战术冲刺</span>
+          <span><b>Space</b> 果冻跳跃</span>
+          <span><b>1 2 3 / 滚轮</b> 切换武器</span>
+          <span><b>R</b> 装填弹药</span>
+          <span><b>Tab</b> 战绩榜</span>
+          <span><b>Esc</b> 释放鼠标/暂停</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 欢迎 / 开始界面 -->
+  <!-- 欢迎 / 开始与对战大厅界面 -->
   <div id="start-screen" class="modal-overlay">
-    <div class="modal-window">
+    <div class="modal-window lobby-window">
       <div class="cyber-header">
-        <div class="glitch-title" data-text="CYBERSTRIKE 3D">CYBERSTRIKE 3D</div>
-        <div class="subtitle">赛博前线：霓虹歼灭战</div>
+        <div class="glitch-title" data-text="🎀 KITTY STRIKE 3D 🎀">🎀 KITTY STRIKE 3D 🎀</div>
+        <div class="subtitle">甜心喵喵 3D · 萌偶大作战（支持多人联机茶话会）</div>
+        <button id="btn-fullscreen-lobby" class="cyber-btn small fullscreen-btn" style="margin-top: 10px;">⛶ 切换全屏沉浸模式 (F11)</button>
       </div>
 
-      <div class="game-brief">
-        警告：中央反应堆被叛变机械军团入侵！消灭所有无人机、潜伏者与泰坦机甲，誓死守护核心。
-      </div>
-
-      <div class="controls-guide">
-        <div class="guide-col">
-          <div class="guide-item"><span class="key-badge">W A S D</span> 移动走位</div>
-          <div class="guide-item"><span class="key-badge">Shift</span> 战术冲刺</div>
-          <div class="guide-item"><span class="key-badge">Space</span> 弹跳 / 踩跳跃垫</div>
-          <div class="guide-item"><span class="key-badge">鼠标移动</span> 环顾视角 (需锁定)</div>
+      <!-- 玩家个人身份定制 -->
+      <div class="profile-card">
+        <div class="profile-field">
+          <label for="player-nickname">萌宠昵称：</label>
+          <input type="text" id="player-nickname" class="cyber-input" value="甜心萌喵" maxlength="12" placeholder="输入你的可爱昵称">
         </div>
-        <div class="guide-col">
-          <div class="guide-item"><span class="key-badge">鼠标左键</span> 开火射击</div>
-          <div class="guide-item"><span class="key-badge">鼠标右键</span> 精确瞄准 (磁轨炮开镜)</div>
-          <div class="guide-item"><span class="key-badge">R</span> 手动装填弹药</div>
-          <div class="guide-item"><span class="key-badge">1 / 2 / 3</span> 切换未来武器</div>
-        </div>
-      </div>
-
-      <div class="weapons-preview">
-        <div class="wp-card">
-          <div class="wp-tag">主武器 1</div>
-          <div class="wp-title neon-cyan">等离子冲锋枪</div>
-          <div class="wp-desc">高射速电浆弹，容量大，适合中近距离压制</div>
-        </div>
-        <div class="wp-card">
-          <div class="wp-tag">主武器 2</div>
-          <div class="wp-title neon-orange">碎裂重型霰弹枪</div>
-          <div class="wp-desc">8发高热霰弹，贴脸爆发极高，强冲击力</div>
-        </div>
-        <div class="wp-card">
-          <div class="wp-tag">主武器 3</div>
-          <div class="wp-title neon-magenta">湮灭磁轨炮</div>
-          <div class="wp-desc">长程高能穿透射线，右键高倍镜，一击必杀</div>
+        <div class="profile-field">
+          <label>软萌毛绒配色：</label>
+          <div class="color-options" id="color-options">
+            <button class="color-dot active" data-color="#ff69b4" style="background-color: #ff69b4;" title="草莓粉"></button>
+            <button class="color-dot" data-color="#ff99c8" style="background-color: #ff99c8;" title="奶霜樱花粉"></button>
+            <button class="color-dot" data-color="#fcf6bd" style="background-color: #fcf6bd;" title="布丁奶黄"></button>
+            <button class="color-dot" data-color="#d0f4de" style="background-color: #d0f4de;" title="薄荷马卡龙"></button>
+            <button class="color-dot" data-color="#a9def9" style="background-color: #a9def9;" title="苏打海盐蓝"></button>
+            <button class="color-dot" data-color="#e4c1f9" style="background-color: #e4c1f9;" title="梦幻香芋紫"></button>
+          </div>
         </div>
       </div>
 
-      <button id="btn-start" class="cyber-btn primary">
-        <span class="btn-glow"></span>
-        <span class="btn-text">点击开始接入战场 (进入游戏)</span>
-      </button>
+      <!-- 模式切换选项卡 -->
+      <div class="lobby-tabs">
+        <button id="tab-btn-mp" class="lobby-tab-btn active" data-tab="tab-mp">🍰 联机派对对决 (PvP)</button>
+        <button id="tab-btn-solo" class="lobby-tab-btn" data-tab="tab-solo">🧸 单人玩偶茶话会 (PvE)</button>
+      </div>
 
-      <div class="tip-text">提示：点击后将锁定鼠标视角，按 [Esc] 可随时暂停与解锁鼠标</div>
+      <!-- 模式卡片 1：多人在线对战 -->
+      <div id="tab-mp" class="lobby-tab-content">
+        <div class="mp-cards-grid">
+          <!-- 创建房间 -->
+          <div class="mp-card">
+            <div class="mp-card-title neon-pink">🍓 创建茶话会</div>
+            <div class="mp-card-desc">生成专属 6 位房间码，支持一键复制链接邀请闺蜜好友一起联机玩萌宠对战</div>
+            <button id="btn-create-room" class="cyber-btn primary full-width">
+              <span class="btn-glow"></span>
+              <span class="btn-text">💖 创建新房间并进入</span>
+            </button>
+          </div>
+
+          <!-- 输入房间码加入 -->
+          <div class="mp-card">
+            <div class="mp-card-title neon-orange">🍬 加入茶话会</div>
+            <div class="mp-card-desc">输入好友分享的房间码直接接入甜美战场</div>
+            <div class="join-input-group">
+              <input type="text" id="input-room-code" class="cyber-input room-code-input" placeholder="输入房间码 (如 KITTY-8K2A)" maxlength="16">
+              <button id="btn-join-room" class="cyber-btn success">进入</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 公开大厅与快速对战 -->
+        <div class="public-lobby-section">
+          <div class="lobby-section-header">
+            <span class="lobby-section-title">🍭 开放中的甜品派对大厅</span>
+            <div class="lobby-actions">
+              <button id="btn-refresh-rooms" class="cyber-btn small">🔄 刷新列表</button>
+              <button id="btn-quick-match" class="cyber-btn primary small">🎀 快速加入</button>
+            </div>
+          </div>
+          <div id="rooms-list-container" class="rooms-list-container">
+            <div class="lobby-empty-hint">正在搜寻开放中的茶话会房间...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 模式卡片 2：单人训练营 -->
+      <div id="tab-solo" class="lobby-tab-content hidden">
+        <div class="game-brief">
+          草莓甜点城堡被活泼调皮的玩偶们占领啦！快拿起你的草莓喵喵枪、糖果枪与星愿魔杖，和玩偶伙伴们尽情玩耍吧！
+        </div>
+
+        <div class="weapons-preview">
+          <div class="wp-card">
+            <div class="wp-tag">可爱玩具 1</div>
+            <div class="wp-title neon-pink">🍓 草莓喵喵枪</div>
+            <div class="wp-desc">高射速草莓果汁弹，双出水喷嘴软萌压制</div>
+          </div>
+          <div class="wp-card">
+            <div class="wp-tag">可爱玩具 2</div>
+            <div class="wp-title neon-orange">🍬 彩虹波波糖果枪</div>
+            <div class="wp-desc">8颗缤纷糖果球散射，贴脸甜蜜爆发</div>
+          </div>
+          <div class="wp-card">
+            <div class="wp-tag">可爱玩具 3</div>
+            <div class="wp-title neon-magenta">✨ 星愿爱心魔杖炮</div>
+            <div class="wp-desc">长程高能星愿光束，右键高倍魔法镜精准送出爱心</div>
+          </div>
+        </div>
+
+        <button id="btn-start" class="cyber-btn primary full-width">
+          <span class="btn-glow"></span>
+          <span class="btn-text">🎀 开启萌偶茶话会挑战 (AI 波次防守)</span>
+        </button>
+      </div>
+
+      <!-- 操作按键指引 -->
+      <div class="controls-guide mini">
+        <div class="guide-item"><span class="key-badge">WASD</span> 小碎步</div>
+        <div class="guide-item"><span class="key-badge">Shift</span> 活力奔跑</div>
+        <div class="guide-item"><span class="key-badge">Space</span> 果冻蹦床</div>
+        <div class="guide-item"><span class="key-badge">左键</span> 发射爱心/糖果</div>
+        <div class="guide-item"><span class="key-badge">右键</span> 星愿开镜/瞄准</div>
+        <div class="guide-item"><span class="key-badge">Tab</span> 派对排行榜</div>
+        <div class="guide-item"><span class="key-badge">1/2/3</span> 换玩具</div>
+        <div class="guide-item"><span class="key-badge">Esc</span> 稍作休息</div>
+      </div>
+
+      <div class="tip-text">💡 提示：多人对战利用 WebRTC P2P 直连，超低延迟且 0 服务器消耗；将网址分享给好友打开即可同台竞技！</div>
     </div>
   </div>
+
+  <!-- TAB 对战记分榜 (Scoreboard Overlay) -->
+  <div id="scoreboard-modal" class="modal-overlay hidden">
+    <div class="modal-window scoreboard-window">
+      <div class="scoreboard-header">
+        <div class="sb-title">🎀 KITTY STRIKE 实时战绩榜 🎀</div>
+        <div class="sb-room-info">茶话会房间: <span id="scoreboard-room" class="neon-pink">KITTY-ARENA</span></div>
+      </div>
+      <table class="scoreboard-table">
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>小可爱代号</th>
+            <th>送出爱心 (K)</th>
+            <th>被萌倒 (D)</th>
+            <th>甜度积分</th>
+            <th>延迟</th>
+          </tr>
+        </thead>
+        <tbody id="scoreboard-body">
+          <!-- 动态渲染 -->
+        </tbody>
+      </table>
+      <div class="scoreboard-hint">松开 [Tab] 键返回玩耍</div>
+    </div>
+  </div>
+
+  <!-- 玩家阵亡复活倒计时遮罩 (Respawn Overlay) -->
+  <div id="respawn-overlay" class="modal-overlay hidden">
+    <div class="modal-window respawn-window">
+      <div class="respawn-title neon-pink">💖 哎呀，被小可爱萌倒啦~</div>
+      <div id="respawn-killer-text" class="respawn-subtitle"></div>
+      <div class="respawn-spinner"></div>
+      <div id="respawn-timer-text" class="respawn-countdown neon-pink">3 秒后原地满血复活...</div>
+    </div>
+  </div>
+
+  <!-- Toast 消息浮窗 -->
+  <div id="toast-message" class="toast-message hidden"></div>
 
   <!-- 暂停界面 -->
   <div id="pause-screen" class="modal-overlay hidden">
     <div class="modal-window">
       <div class="cyber-header">
-        <div class="glitch-title">作战已暂停</div>
+        <div class="glitch-title">☕ 茶歇时光</div>
       </div>
       <div class="pause-settings">
         <div class="setting-row">
@@ -239,12 +383,16 @@
         </div>
         <div class="setting-row">
           <label for="invert-y-checkbox">反转垂直视角 (Invert Y):</label>
-          <input type="checkbox" id="invert-y-checkbox" style="width: 20px; height: 20px; accent-color: var(--primary-cyan); cursor: pointer;">
+          <input type="checkbox" id="invert-y-checkbox" style="width: 20px; height: 20px; accent-color: var(--primary-pink); cursor: pointer;">
+        </div>
+        <div class="setting-row">
+          <label>屏幕沉浸:</label>
+          <button id="btn-fullscreen-pause" class="cyber-btn small fullscreen-btn" style="padding: 6px 14px;">⛶ 切换全屏 (F11)</button>
         </div>
       </div>
       <div class="modal-actions">
-        <button id="btn-resume" class="cyber-btn primary">继续战斗</button>
-        <button id="btn-restart-pause" class="cyber-btn danger">重新开始</button>
+        <button id="btn-resume" class="cyber-btn primary">继续玩耍</button>
+        <button id="btn-restart-pause" class="cyber-btn danger">返回茶话会大厅</button>
       </div>
     </div>
   </div>
@@ -253,32 +401,32 @@
   <div id="gameover-screen" class="modal-overlay hidden">
     <div class="modal-window">
       <div class="cyber-header">
-        <div class="glitch-title neon-red" data-text="机体损毁 · 作战失败">机体损毁 · 作战失败</div>
-        <div class="subtitle">与指挥中心的神经元连接中断</div>
+        <div class="glitch-title neon-pink" data-text="🧸 茶话会结束啦">🧸 茶话会结束啦</div>
+        <div class="subtitle">玩累了，喝杯草莓奶昔休息一下吧~</div>
       </div>
 
       <div class="stats-summary">
         <div class="stat-card">
-          <span class="sc-label">最终生存波次</span>
-          <span id="final-wave" class="sc-val neon-cyan">第 1 波</span>
+          <span class="sc-label">坚持波次</span>
+          <span id="final-wave" class="sc-val neon-pink">第 1 波</span>
         </div>
         <div class="stat-card">
-          <span class="sc-label">消灭敌军总数</span>
-          <span id="final-kills" class="sc-val neon-red">0</span>
+          <span class="sc-label">送出爱心总数</span>
+          <span id="final-kills" class="sc-val neon-pink">0</span>
         </div>
         <div class="stat-card">
-          <span class="sc-label">最终作战得分</span>
+          <span class="sc-label">本次甜度得分</span>
           <span id="final-score" class="sc-val neon-yellow">0</span>
         </div>
         <div class="stat-card">
-          <span class="sc-label">历史最高得分</span>
+          <span class="sc-label">历史最高甜度</span>
           <span id="high-score" class="sc-val neon-magenta">0</span>
         </div>
       </div>
 
       <button id="btn-restart" class="cyber-btn primary">
         <span class="btn-glow"></span>
-        <span class="btn-text">重启机甲 · 重新挑战</span>
+        <span class="btn-text">🎀 重新开始茶话会</span>
       </button>
     </div>
   </div>

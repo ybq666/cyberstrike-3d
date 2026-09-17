@@ -1,10 +1,12 @@
-// Procedural Web Audio Synthesizer for Cyberstrike 3D
+// Procedural Web Audio Synthesizer for Kitty Strike 3D (Sweet Kawaii Girlish Style)
 class SoundEngine {
   constructor() {
     this.ctx = null;
     this.masterGain = null;
     this.volume = 0.8;
     this.initialized = false;
+    this.bgmTimer = null;
+    this.bgmPlaying = false;
   }
 
   init() {
@@ -35,7 +37,7 @@ class SoundEngine {
     }
   }
 
-  // 1. 等离子冲锋枪开火音效
+  // 1. 草莓喵喵枪开火音效 (Sweet Bouncy Kitty Pew-Pew)
   playPlasmaShot() {
     if (!this.initialized) return;
     this.ensureContext();
@@ -44,128 +46,124 @@ class SoundEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(650, t);
-    osc.frequency.exponentialRampToValueAtTime(120, t + 0.12);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(820, t);
+    osc.frequency.exponentialRampToValueAtTime(320, t + 0.1);
 
-    // Filter
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(3000, t);
-    filter.frequency.exponentialRampToValueAtTime(600, t + 0.12);
+    gain.gain.setValueAtTime(0.28, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
 
-    gain.gain.setValueAtTime(0.35, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    // Cute bubble pop harmonics
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'triangle';
+    subOsc.frequency.setValueAtTime(1100, t);
+    subOsc.frequency.exponentialRampToValueAtTime(440, t + 0.08);
+    subGain.gain.setValueAtTime(0.18, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
 
-    osc.connect(filter);
-    filter.connect(gain);
+    osc.connect(gain);
     gain.connect(this.masterGain);
+    subOsc.connect(subGain);
+    subGain.connect(this.masterGain);
 
     osc.start(t);
-    osc.stop(t + 0.12);
+    osc.stop(t + 0.1);
+    subOsc.start(t);
+    subOsc.stop(t + 0.08);
   }
 
-  // 2. 碎裂霰弹枪开火音效
+  // 2. 彩虹波波糖果枪开火音效 (Party Confetti & Candy Popper)
   playShotgunShot() {
     if (!this.initialized) return;
     this.ensureContext();
     const t = this.ctx.currentTime;
 
-    // 低频轰鸣
+    // Party Popper Pop
     const osc = this.ctx.createOscillator();
     const oscGain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(160, t);
-    osc.frequency.exponentialRampToValueAtTime(35, t + 0.3);
-
-    oscGain.gain.setValueAtTime(0.8, t);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(450, t);
+    osc.frequency.exponentialRampToValueAtTime(110, t + 0.18);
+    oscGain.gain.setValueAtTime(0.5, t);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
 
     osc.connect(oscGain);
     oscGain.connect(this.masterGain);
-
     osc.start(t);
-    osc.stop(t + 0.3);
+    osc.stop(t + 0.18);
 
-    // 爆破白噪声
-    const bufferSize = this.ctx.sampleRate * 0.25;
+    // Confetti streamer soft sparkle noise
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.18);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
       data[i] = Math.random() * 2 - 1;
     }
-
     const noise = this.ctx.createBufferSource();
     noise.buffer = buffer;
 
     const noiseFilter = this.ctx.createBiquadFilter();
-    noiseFilter.type = 'lowpass';
-    noiseFilter.frequency.setValueAtTime(1400, t);
-    noiseFilter.frequency.exponentialRampToValueAtTime(200, t + 0.25);
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(2200, t);
+    noiseFilter.Q.value = 3;
 
     const noiseGain = this.ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.7, t);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    noiseGain.gain.setValueAtTime(0.35, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
 
     noise.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
     noiseGain.connect(this.masterGain);
 
     noise.start(t);
-    noise.stop(t + 0.25);
+    noise.stop(t + 0.18);
 
-    // 机械后坐力卡嗒声
-    setTimeout(() => {
-      this.playMechanicalClick();
-    }, 280);
+    // Sweet toy click
+    setTimeout(() => this.playMechanicalClick(), 220);
   }
 
-  // 3. 湮灭磁轨炮开火音效
+  // 3. 星愿爱心魔杖炮开火音效 (Magical Star Wand Glissando Chime)
   playRailgunShot() {
     if (!this.initialized) return;
     this.ensureContext();
     const t = this.ctx.currentTime;
 
-    // 高频脉冲充能爆裂
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(1800, t);
-    osc.frequency.exponentialRampToValueAtTime(80, t + 0.45);
+    // Magical girl harp/crystal sparkle arpeggio
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98];
+    notes.forEach((freq, idx) => {
+      const noteOsc = this.ctx.createOscillator();
+      const noteGain = this.ctx.createGain();
+      const startTime = t + idx * 0.035;
 
-    gain.gain.setValueAtTime(0.6, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      noteOsc.type = 'sine';
+      noteOsc.frequency.setValueAtTime(freq, startTime);
 
-    // 金属共振
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(1200, t);
-    filter.Q.value = 8;
+      noteGain.gain.setValueAtTime(0.25, startTime);
+      noteGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
+      noteOsc.connect(noteGain);
+      noteGain.connect(this.masterGain);
+      noteOsc.start(startTime);
+      noteOsc.stop(startTime + 0.35);
+    });
 
-    osc.start(t);
-    osc.stop(t + 0.45);
+    // Radiant magic beam resonance
+    const beamOsc = this.ctx.createOscillator();
+    const beamGain = this.ctx.createGain();
+    beamOsc.type = 'triangle';
+    beamOsc.frequency.setValueAtTime(880, t);
+    beamOsc.frequency.exponentialRampToValueAtTime(220, t + 0.4);
+    beamGain.gain.setValueAtTime(0.35, t);
+    beamGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
 
-    // 附带能量次重低音震动
-    const subOsc = this.ctx.createOscillator();
-    const subGain = this.ctx.createGain();
-    subOsc.type = 'sine';
-    subOsc.frequency.setValueAtTime(120, t);
-    subOsc.frequency.exponentialRampToValueAtTime(30, t + 0.5);
-    subGain.gain.setValueAtTime(0.7, t);
-    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-
-    subOsc.connect(subGain);
-    subGain.connect(this.masterGain);
-
-    subOsc.start(t);
-    subOsc.stop(t + 0.5);
+    beamOsc.connect(beamGain);
+    beamGain.connect(this.masterGain);
+    beamOsc.start(t);
+    beamOsc.stop(t + 0.4);
   }
 
-  // 击中敌人提示音 (Hitmarker)
+  // 击中敌人提示音 (Sweet Crystal Fairy Bell)
   playHitmarker(isCrit = false) {
     if (!this.initialized) return;
     this.ensureContext();
@@ -175,94 +173,107 @@ class SoundEngine {
     const gain = this.ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(isCrit ? 1400 : 900, t);
-    osc.frequency.setValueAtTime(isCrit ? 1800 : 1100, t + 0.03);
+    osc.frequency.setValueAtTime(isCrit ? 1567.98 : 1174.66, t); // G6 or D6
+    if (isCrit) {
+      osc.frequency.setValueAtTime(2093.0, t + 0.04); // C7 sparkle
+    }
 
-    gain.gain.setValueAtTime(isCrit ? 0.35 : 0.2, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    gain.gain.setValueAtTime(isCrit ? 0.35 : 0.22, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + (isCrit ? 0.14 : 0.09));
 
     osc.connect(gain);
     gain.connect(this.masterGain);
 
     osc.start(t);
-    osc.stop(t + 0.08);
+    osc.stop(t + (isCrit ? 0.14 : 0.09));
   }
 
-  // 爆炸音效
+  // 玩偶派对气球爆炸音效 (Cute Balloon Pop + Glitter)
   playExplosion(isLarge = false) {
     if (!this.initialized) return;
     this.ensureContext();
     const t = this.ctx.currentTime;
-    const dur = isLarge ? 0.8 : 0.45;
 
-    const bufferSize = Math.floor(this.ctx.sampleRate * dur);
+    // Cheerful cartoon balloon pop
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, t);
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.22);
+    gain.gain.setValueAtTime(isLarge ? 0.7 : 0.45, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(t);
+    osc.stop(t + 0.22);
+
+    // Glitter sprinkle noise
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.3);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
       data[i] = Math.random() * 2 - 1;
     }
-
     const noise = this.ctx.createBufferSource();
     noise.buffer = buffer;
 
     const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(isLarge ? 800 : 500, t);
-    filter.frequency.exponentialRampToValueAtTime(50, t + dur);
+    filter.type = 'highpass';
+    filter.frequency.setValueAtTime(3500, t);
 
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(isLarge ? 0.85 : 0.5, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(isLarge ? 0.35 : 0.2, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
 
     noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
+    filter.connect(noiseGain);
+    noiseGain.connect(this.masterGain);
 
     noise.start(t);
-    noise.stop(t + dur);
+    noise.stop(t + 0.3);
   }
 
-  // 机械卡嗒声 (换弹/泵动)
+  // 玩具机械卡嗒声 (Cute Toy Click)
   playMechanicalClick() {
     if (!this.initialized) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(450, t);
-    osc.frequency.exponentialRampToValueAtTime(100, t + 0.05);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(750, t);
+    osc.frequency.exponentialRampToValueAtTime(350, t + 0.04);
 
-    gain.gain.setValueAtTime(0.15, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
 
     osc.connect(gain);
     gain.connect(this.masterGain);
     osc.start(t);
-    osc.stop(t + 0.05);
+    osc.stop(t + 0.04);
   }
 
-  // 换弹完成音
+  // 换弹完成音 (Joyful Two-Tone Chime)
   playReloadComplete() {
     if (!this.initialized) return;
     const t = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(400, t);
-    osc.frequency.setValueAtTime(800, t + 0.06);
-
-    gain.gain.setValueAtTime(0.2, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-    osc.start(t);
-    osc.stop(t + 0.12);
+    [659.25, 1046.5].forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const st = t + idx * 0.07;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, st);
+      gain.gain.setValueAtTime(0.2, st);
+      gain.gain.exponentialRampToValueAtTime(0.001, st + 0.12);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(st);
+      osc.stop(st + 0.12);
+    });
   }
 
-  // 跳跃垫弹射音
+  // 果冻布丁弹射跳跃音 (Playful Cartoon Boing~~!)
   playJumpPad() {
     if (!this.initialized) return;
     this.ensureContext();
@@ -271,42 +282,43 @@ class SoundEngine {
     const gain = this.ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(200, t);
-    osc.frequency.exponentialRampToValueAtTime(900, t + 0.25);
+    osc.frequency.setValueAtTime(180, t);
+    osc.frequency.exponentialRampToValueAtTime(820, t + 0.28);
 
-    gain.gain.setValueAtTime(0.4, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    gain.gain.setValueAtTime(0.42, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
 
     osc.connect(gain);
     gain.connect(this.masterGain);
     osc.start(t);
-    osc.stop(t + 0.3);
+    osc.stop(t + 0.32);
   }
 
-  // 拾取道具音效
+  // 拾取甜点道具音效 (Sweet Music Box Celeste Arpeggio)
   playPickup() {
     if (!this.initialized) return;
     this.ensureContext();
     const t = this.ctx.currentTime;
-    [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+    const melody = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+    melody.forEach((freq, idx) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      const start = t + idx * 0.05;
+      const start = t + idx * 0.055;
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, start);
 
-      gain.gain.setValueAtTime(0.25, start);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.12);
+      gain.gain.setValueAtTime(0.22, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
 
       osc.connect(gain);
       gain.connect(this.masterGain);
       osc.start(start);
-      osc.stop(start + 0.12);
+      osc.stop(start + 0.18);
     });
   }
 
-  // 玩家受创
+  // 玩家受创 (Soft Cute Squeak)
   playPlayerHurt() {
     if (!this.initialized) return;
     this.ensureContext();
@@ -314,20 +326,20 @@ class SoundEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(140, t);
-    osc.frequency.exponentialRampToValueAtTime(40, t + 0.18);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(420, t);
+    osc.frequency.exponentialRampToValueAtTime(160, t + 0.12);
 
-    gain.gain.setValueAtTime(0.35, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
 
     osc.connect(gain);
     gain.connect(this.masterGain);
     osc.start(t);
-    osc.stop(t + 0.18);
+    osc.stop(t + 0.12);
   }
 
-  // 护盾碎裂
+  // 护盾碎裂 (Cute Bubble Pop-Chime)
   playShieldBreak() {
     if (!this.initialized) return;
     this.ensureContext();
@@ -335,46 +347,94 @@ class SoundEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(700, t);
-    osc.frequency.exponentialRampToValueAtTime(80, t + 0.25);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(987.77, t);
+    osc.frequency.exponentialRampToValueAtTime(220, t + 0.22);
 
-    gain.gain.setValueAtTime(0.4, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
 
     osc.connect(gain);
     gain.connect(this.masterGain);
     osc.start(t);
-    osc.stop(t + 0.25);
+    osc.stop(t + 0.22);
   }
 
-  // 波次开始警报号角
+  // 波次开始欢乐号角 (Joyful Sweet Fanfare)
   playWaveStart() {
     if (!this.initialized) return;
     this.ensureContext();
     const t = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const fanfare = [523.25, 659.25, 783.99, 1046.5];
+    fanfare.forEach((f, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const start = t + idx * 0.08;
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(110, t);
-    osc.frequency.linearRampToValueAtTime(220, t + 0.35);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(f, start);
 
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(600, t);
-    filter.frequency.exponentialRampToValueAtTime(2400, t + 0.35);
+      gain.gain.setValueAtTime(0.28, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
 
-    gain.gain.setValueAtTime(0.01, t);
-    gain.gain.linearRampToValueAtTime(0.4, t + 0.2);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(start);
+      osc.stop(start + 0.3);
+    });
+  }
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
+  playWaveAlert() {
+    this.playWaveStart();
+  }
 
-    osc.start(t);
-    osc.stop(t + 0.7);
+  // 启动悠扬八音盒可爱背景音乐 (Sweet Kawaii Music Box BGM Loop)
+  startKawaiiBgm() {
+    if (this.bgmPlaying) return;
+    this.ensureContext();
+    this.bgmPlaying = true;
+
+    // Soothing sweet pentatonic lullaby notes
+    const melodyNotes = [
+      523.25, 659.25, 783.99, 659.25, 1046.5, 783.99, 880.0, 659.25,
+      587.33, 783.99, 880.0, 783.99, 1174.66, 880.0, 783.99, 659.25
+    ];
+
+    let noteIndex = 0;
+    const playNextNote = () => {
+      if (!this.bgmPlaying || !this.ctx) return;
+      const t = this.ctx.currentTime;
+      const freq = melodyNotes[noteIndex % melodyNotes.length];
+      noteIndex++;
+
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+
+      // Very gentle, warm volume
+      gain.gain.setValueAtTime(0.06, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(t);
+      osc.stop(t + 0.6);
+
+      this.bgmTimer = setTimeout(playNextNote, 320);
+    };
+
+    playNextNote();
+  }
+
+  stopKawaiiBgm() {
+    this.bgmPlaying = false;
+    if (this.bgmTimer) {
+      clearTimeout(this.bgmTimer);
+      this.bgmTimer = null;
+    }
   }
 }
 
