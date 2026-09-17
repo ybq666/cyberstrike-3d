@@ -1668,4 +1668,160 @@ body, html {
   50% { transform: translateY(-8px); }
 }
 
+/* ========================================================
+   🌐 联机信令状态指示与通道诊断网络弹窗样式
+   ======================================================== */
+.signal-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 105, 180, 0.08);
+  border: 1px solid rgba(255, 182, 193, 0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  margin: 10px 0 14px 0;
+  backdrop-filter: blur(8px);
+}
+
+.signal-status-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.signal-dot.ready {
+  background: #00ff88;
+  box-shadow: 0 0 10px #00ff88, 0 0 4px #00ff88;
+  animation: pulse-green 2s infinite ease-in-out;
+}
+
+.signal-dot.connecting {
+  background: #ffaa00;
+  box-shadow: 0 0 10px #ffaa00;
+  animation: pulse-orange 1s infinite alternate;
+}
+
+.signal-dot.offline {
+  background: #888888;
+  box-shadow: none;
+}
+
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes pulse-orange {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.signal-text {
+  font-size: 13px;
+  color: #fff0f5;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.signal-btn-mini {
+  background: rgba(255, 105, 180, 0.2);
+  border: 1px solid rgba(255, 105, 180, 0.5);
+  color: #ffb6c1;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.signal-btn-mini:hover {
+  background: var(--primary-pink);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 105, 180, 0.6);
+  transform: translateY(-1px);
+}
+
+/* 信令设置模态窗 */
+.signal-settings-window {
+  max-width: 500px;
+  width: 90%;
+  background: rgba(45, 15, 35, 0.95);
+  border: 2px solid var(--primary-pink);
+  box-shadow: 0 0 35px rgba(255, 105, 180, 0.35);
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.signal-settings-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.signal-modes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.signal-mode-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 182, 193, 0.25);
+  border-radius: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.signal-mode-card:hover {
+  background: rgba(255, 105, 180, 0.12);
+  border-color: var(--primary-pink);
+}
+
+.signal-mode-card.active {
+  background: rgba(255, 105, 180, 0.18);
+  border-color: var(--primary-pink);
+  box-shadow: 0 0 12px rgba(255, 105, 180, 0.3);
+}
+
+.signal-mode-card input[type="radio"] {
+  accent-color: var(--primary-pink);
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.mode-info {
+  flex: 1;
+}
+
+.mode-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.mode-desc {
+  font-size: 12px;
+  color: #ffd1dc;
+  line-height: 1.45;
+}
+
+.signal-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+
 

@@ -167,6 +167,52 @@ class Game {
       });
     }
 
+    // 3.1 信令通道诊断与设置弹窗交互
+    const btnDiagnose = document.getElementById('btn-signal-diagnose');
+    const signalModal = document.getElementById('signal-modal');
+    const btnSignalClose = document.getElementById('btn-signal-close');
+    const btnSignalRetry = document.getElementById('btn-signal-retry');
+    const signalModeCards = document.querySelectorAll('.signal-mode-card');
+
+    if (btnDiagnose && signalModal) {
+      btnDiagnose.addEventListener('click', () => {
+        signalModal.classList.remove('hidden');
+      });
+    }
+
+    if (btnSignalClose && signalModal) {
+      btnSignalClose.addEventListener('click', () => {
+        signalModal.classList.add('hidden');
+      });
+    }
+
+    if (btnSignalRetry) {
+      btnSignalRetry.addEventListener('click', () => {
+        this.network.connectSignaling(this.network.mode).then(() => {
+          this.network.requestRoomList();
+          this.hud.showToast('信令通道已刷新');
+        }).catch(() => {});
+      });
+    }
+
+    signalModeCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const mode = card.getAttribute('data-mode');
+        if (!mode) return;
+        signalModeCards.forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+
+        this.hud.showToast(`正在切换信令通道: ${mode}...`);
+        this.network.switchSignalingMode(mode).then(() => {
+          this.hud.showToast('信令通道切换成功！');
+        }).catch(err => {
+          this.hud.showToast(`信令切换异常: ${err.message}`);
+        });
+      });
+    });
+
     // 4. Solo Mode Start Button
     const btnStartSolo = document.getElementById('btn-start');
     if (btnStartSolo) {
@@ -396,6 +442,16 @@ class Game {
   }
 
   setupNetwork() {
+    const statusDot = document.getElementById('signal-status-dot');
+    const statusText = document.getElementById('signal-status-text');
+
+    this.network.onSignalingStatusChange = (status, label) => {
+      if (statusDot && statusText) {
+        statusDot.className = `signal-dot ${status === 'ready' || status === 'switched' ? 'ready' : (status === 'connecting' ? 'connecting' : 'offline')}`;
+        statusText.textContent = `联机信令: ${label}`;
+      }
+    };
+
     this.network.onRoomJoined = (roomId, existingPeers) => {
       this.gameMode = 'MULTIPLAYER';
       this.hud.setMode(true);
@@ -624,23 +680,19 @@ class Game {
     this.isRespawning = false;
 
     if (action === 'CREATE') {
-      this.network.createRoom(null, this.playerName, this.selectedColor);
+      this.hud.showToast('正在创建茶话会房间...');
+      this.network.createRoom(null, this.playerName, this.selectedColor).catch(err => {
+        this.hud.showToast(`创建房间失败: ${err.message}`);
+      });
     } else if (action === 'JOIN') {
-      this.network.joinRoom(targetRoomId, this.playerName, this.selectedColor);
+      this.hud.showToast(`正在接入房间 ${targetRoomId}...`);
+      this.network.joinRoom(targetRoomId, this.playerName, this.selectedColor).catch(err => {
+        this.hud.showToast(`加入房间失败: ${err.message}`);
+      });
     } else if (action === 'QUICK') {
-      // Fetch rooms first, if any available join first one, otherwise create
-      this.network.connectSignaling().then(() => {
-        this.network.ws.send(JSON.stringify({ type: 'list_rooms' }));
-        const onList = (rooms) => {
-          this.network.onRoomListReceived = null;
-          this.renderPublicRoomsList(rooms);
-          if (rooms && rooms.length > 0) {
-            this.network.joinRoom(rooms[0].roomId, this.playerName, this.selectedColor);
-          } else {
-            this.network.createRoom(null, this.playerName, this.selectedColor);
-          }
-        };
-        this.network.onRoomListReceived = onList;
+      this.hud.showToast('正在为您快速搜寻对局...');
+      this.network.quickMatch(this.playerName, this.selectedColor).catch(err => {
+        this.hud.showToast(`快速对战失败: ${err.message}`);
       });
     }
   }

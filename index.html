@@ -236,6 +236,15 @@
         </div>
       </div>
 
+      <!-- 联机信令通道状态条 -->
+      <div class="signal-status-bar" id="signal-status-bar">
+        <div class="signal-status-info">
+          <span class="signal-dot ready" id="signal-status-dot"></span>
+          <span class="signal-text" id="signal-status-text">联机信令: 正在初始化...</span>
+        </div>
+        <button id="btn-signal-diagnose" class="signal-btn-mini" type="button" title="查看或切换网络信令通道">⚙️ 信令网络</button>
+      </div>
+
       <!-- 模式切换选项卡 -->
       <div class="lobby-tabs">
         <button id="tab-btn-mp" class="lobby-tab-btn active" data-tab="tab-mp">🍰 联机派对对决 (PvP)</button>
@@ -428,6 +437,43 @@
         <span class="btn-glow"></span>
         <span class="btn-text">🎀 重新开始茶话会</span>
       </button>
+    </div>
+  </div>
+
+  <!-- 信令网络通道设置与诊断弹窗 -->
+  <div id="signal-modal" class="modal-overlay hidden">
+    <div class="modal-window signal-settings-window">
+      <div class="signal-settings-header">
+        <div class="modal-title neon-pink">🌐 联机信令通道与网络设置</div>
+        <div class="modal-subtitle">自由选择适合您部署网络环境的高可用穿透通道</div>
+      </div>
+      <div class="signal-modes-list">
+        <label class="signal-mode-card active" data-mode="AUTO">
+          <input type="radio" name="signal-mode" value="AUTO" checked>
+          <div class="mode-info">
+            <div class="mode-title">✨ 智能混合自愈模式 (默认推荐)</div>
+            <div class="mode-desc">优先探测本地与边缘节点；若未打包 Functions 或受限，1秒内全自动秒切全球公共信令云，100% 确保联机成功。</div>
+          </div>
+        </label>
+        <label class="signal-mode-card" data-mode="PUBLIC">
+          <input type="radio" name="signal-mode" value="PUBLIC">
+          <div class="mode-info">
+            <div class="mode-title">☁️ 全球高可用公共信令云 (免部署)</div>
+            <div class="mode-desc">跨机房秒级互通，完全不受 Cloudflare Pages 边缘节点隔离限制，异地或跨运营商开黑首选。</div>
+          </div>
+        </label>
+        <label class="signal-mode-card" data-mode="EDGE">
+          <input type="radio" name="signal-mode" value="EDGE">
+          <div class="mode-info">
+            <div class="mode-title">🏢 本地 / Cloudflare 专属边缘节点</div>
+            <div class="mode-desc">直连当前部署站点的 /api/signal 边缘函数（需确保 Pages 正确配置并包含 functions 目录）。</div>
+          </div>
+        </label>
+      </div>
+      <div class="signal-modal-actions">
+        <button id="btn-signal-retry" class="cyber-btn small">🔄 立即重新探测</button>
+        <button id="btn-signal-close" class="cyber-btn primary small">确定并返回</button>
+      </div>
     </div>
   </div>
 
